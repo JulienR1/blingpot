@@ -60,7 +60,9 @@ func main() {
 		client := config.Client(ctx, token)
 		rr, _ := client.Get("https://openidconnect.googleapis.com/v1/userinfo")
 		b, _ := io.ReadAll(rr.Body)
-		fmt.Println(string(b))
+		fmt.Println(w, string(b))
+
+		http.Redirect(w, r, "http://localhost:5173", http.StatusTemporaryRedirect)
 	})
 
 	http.Handle("/*", http.RedirectHandler("/", http.StatusTemporaryRedirect))
