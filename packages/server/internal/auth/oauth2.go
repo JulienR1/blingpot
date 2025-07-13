@@ -2,8 +2,8 @@ package auth
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -19,6 +19,16 @@ type Auth struct {
 	appUrl     string
 
 	config *oauth2.Config
+}
+
+type UserInfo struct {
+	Sub           string `json:"sub"`
+	Name          string `json:"name"`
+	GivenName     string `json:"given_name"`
+	FamilyName    string `json:"family_name"`
+	Picture       string `json:"picture"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
 }
 
 func New(serverUrl, appUrl string) *Auth {
@@ -75,9 +85,26 @@ func (a *Auth) HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := a.config.Client(ctx, token)
-	rr, _ := client.Get("https://openidconnect.googleapis.com/v1/userinfo")
-	b, _ := io.ReadAll(rr.Body)
-	fmt.Println(w, string(b))
+	request, err := client.Get("https://openidconnect.googleapis.com/v1/userinfo")
+	if err != nil {
+		http.Error(w, "could not find user info", http.StatusInternalServerError)
+		return
+	}
+
+	var userInfo UserInfo
+	err = json.NewDecoder(request.Body).Decode(&userInfo)
+	if err != nil {
+		http.Error(w, "could not parse user info: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	jwt, err := CreateToken(&userInfo)
+	if err != nil {
+		http.Error(w, "could not create jwt token:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println(userInfo, jwt)
 
 	http.Redirect(w, r, a.appUrl, http.StatusTemporaryRedirect)
 }
