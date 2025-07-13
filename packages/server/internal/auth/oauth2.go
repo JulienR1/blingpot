@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 
-	"github.com/julienr1/blingpot/internal/assert"
+	"github.com/julienr1/blingpot/internal/env"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -32,20 +31,14 @@ type UserInfo struct {
 }
 
 func New(serverUrl, appUrl string) *Auth {
-	clientId := os.Getenv("OAUTH_CLIENT_ID")
-	clientSecret := os.Getenv("OAUTH_CLIENT_SECRET")
-
-	assert.Assert(len(clientId) > 0, "missing oauth client id in environment")
-	assert.Assert(len(clientSecret) > 0, "missing oauth client secret in environment")
-
 	return &Auth{
 		verifierId: 0,
 		verifiers:  make(map[uint8]string),
 		appUrl:     appUrl,
 
 		config: &oauth2.Config{
-			ClientID:     clientId,
-			ClientSecret: clientSecret,
+			ClientID:     env.OauthClientId,
+			ClientSecret: env.OauthClientSecret,
 			Scopes: []string{
 				"https://www.googleapis.com/auth/userinfo.email ",
 				"https://www.googleapis.com/auth/userinfo.profile",
