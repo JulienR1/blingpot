@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"tool/internal/assert"
 
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
@@ -35,10 +36,8 @@ func init() {
 }
 
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	err := rootCmd.Execute()
+	assert.AssertErr(err)
 }
 
 type DatabaseMode string
@@ -55,17 +54,12 @@ type DatabaseOptions struct {
 
 func Database(opts *DatabaseOptions) *sql.DB {
 	if len(connStr) == 0 {
-		if err := godotenv.Load(environmentFile); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
+		err := godotenv.Load(environmentFile)
+		assert.AssertErr(err)
 		connStr = os.Getenv("CONN_STR")
 	}
 
-	if len(connStr) == 0 {
-		fmt.Fprintln(os.Stderr, "no database connection string")
-		os.Exit(1)
-	}
+	assert.Assert(len(connStr) > 0, "no database connection string")
 
 	if opts != nil {
 		var params []string
@@ -76,32 +70,22 @@ func Database(opts *DatabaseOptions) *sql.DB {
 	}
 
 	db, err := sql.Open("sqlite3", connStr)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	assert.AssertErr(err)
 
 	return db
 }
 
 func MigrationsDir() string {
 	if len(migrationDir) == 0 {
-		if err := godotenv.Load(environmentFile); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
+		err := godotenv.Load(environmentFile)
+		assert.AssertErr(err)
 		migrationDir = os.Getenv("MIGRATIONS")
 	}
 
-	if len(migrationDir) == 0 {
-		fmt.Fprintln(os.Stderr, "migrations directory was not set")
-		os.Exit(1)
-	}
+	assert.Assert(len(migrationDir) > 0, "migrations directory was not set")
 
-	if _, err := os.Stat(migrationDir); err != nil {
-		fmt.Fprintln(os.Stderr, "could not find migrations directory")
-		os.Exit(1)
-	}
+	_, err := os.Stat(migrationDir)
+	assert.Assert(err == nil, "could not find migrations directory")
 
 	return migrationDir
 }

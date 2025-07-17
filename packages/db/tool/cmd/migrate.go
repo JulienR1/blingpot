@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"tool/internal/assert"
 	"tool/internal/migrations"
 
 	"github.com/spf13/cobra"
@@ -23,21 +25,13 @@ var migrateCmd = &cobra.Command{
 
 		if len(args) > 0 {
 			count, err = strconv.Atoi(args[0])
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "Invalid migration [count] passed in")
-				os.Exit(1)
-			}
+			assert.Assert(err == nil && count > 0, "Invalid migration [count] passed in")
 		}
 
 		db := Database(nil)
 		defer db.Close()
 
-		if err := migrations.EnsureExists(db); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-
-		var migrationsToExecute []migrations.Migration
+		assert.AssertErr(migrations.EnsureExists(db))
 
 		var latestMigration migrations.Migration
 		_ = db.
@@ -45,6 +39,7 @@ var migrateCmd = &cobra.Command{
 			Scan(&latestMigration.Timestamp, &latestMigration.Label)
 		var latestMigrationFileName = fmt.Sprintf("%s-%s.up.sql", latestMigration.Timestamp, latestMigration.Label)
 
+		var migrationsToExecute []migrations.Migration
 		var walkingNewMigrations = len(latestMigration.Timestamp) == 0
 		filepath.WalkDir(MigrationsDir(), func(path string, d fs.DirEntry, err error) error {
 			if d.IsDir() || strings.HasSuffix(d.Name(), ".up.sql") == false {
@@ -86,28 +81,21 @@ var migrateCmd = &cobra.Command{
 		})
 
 		if len(migrationsToExecute) == 0 {
-			fmt.Fprintf(os.Stderr, "Already up to date, no migrations to execute.\r\n")
+			log.Println("Already up to date, no migrations to execute.")
 			return
 		}
 
 		tx, err := db.Begin()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Could not begin migration transaction:", err)
-			os.Exit(1)
-		}
+		assert.Assertf(err == nil, "Could not begin migration transaction: %s\r\n", err)
 		defer tx.Rollback()
 
 		for i, migration := range migrationsToExecute {
-			fmt.Fprintf(os.Stderr, "(%d:%d) Executing up migration '%s'\r\n", i+1, len(migrationsToExecute), migration.Label)
-			if err := migrations.Up(tx, migration); err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
-			}
+			fmt.Fprintf(os.Stderr, "(%d:%d) Executing up migration '%s'\r\n", i+1, len(migrationsToExecute), fmt.Sprintf("%s-%s.up.sql", migration.Timestamp, migration.Label))
+			err := migrations.Up(tx, migration)
+			assert.AssertErr(err)
 		}
 
-		if err := tx.Commit(); err != nil {
-			fmt.Fprintln(os.Stderr, "Could not complete migration", err)
-			os.Exit(1)
-		}
+		err = tx.Commit()
+		assert.Assertf(err == nil, "Could not complete migration: %s\r\n", err)
 	},
 }

@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -15,9 +14,9 @@ var checkCmd = &cobra.Command{
 		defer db.Close()
 
 		if db.Ping() == nil {
-			fmt.Fprintln(os.Stderr, "Connection to database was successful")
+			log.Println("Connection to database was successful")
 		} else {
-			fmt.Fprintln(os.Stderr, "Could not connect to database")
+			log.Println("Could not connect to database")
 		}
 	},
 }

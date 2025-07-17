@@ -24,6 +24,6 @@ func Load() {
 
 func env(key string) string {
 	value := os.Getenv(key)
-	assert.Assertf(len(value) > 0, "expected '%s' to be in environment", key)
+	assert.Assertf(len(value) > 0, "expected '%s' to be in environment\r\n", key)
 	return value
 }

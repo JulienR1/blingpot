@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"strconv"
+	"tool/internal/assert"
 	"tool/internal/migrations"
 
 	"github.com/spf13/cobra"
@@ -20,72 +22,48 @@ var rollbackCmd = &cobra.Command{
 
 		if len(args) > 0 {
 			count, err = strconv.Atoi(args[0])
-			if err != nil || count <= 0 {
-				fmt.Fprintln(os.Stderr, "Invalid rollback [count] passed in")
-				os.Exit(1)
-			}
+			assert.Assert(err == nil && count > 0, "Invalid rollback [count] passed in")
 		}
 
 		db := Database(nil)
 		defer db.Close()
 
-		if err := migrations.EnsureExists(db); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
+		assert.AssertErr(migrations.EnsureExists(db))
 
 		stmt, err := db.Prepare("select timestamp, label from migrations order by timestamp desc limit ?;")
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Could not prepare rollback statement:", err)
-			os.Exit(1)
-		}
+		assert.Assertf(err == nil, "Could not prepare rollback statement: %s\r\n", err)
 		defer stmt.Close()
 
 		rows, err := stmt.Query(count)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Could not query migrations:", err)
-			os.Exit(1)
-		}
+		assert.Assertf(err == nil, "Could not query migrations: %s\r\n", err)
 		defer rows.Close()
 
 		var rollbacks []migrations.Migration
 		for rows.Next() {
 			var m migrations.Migration
-			if err := rows.Scan(&m.Timestamp, &m.Label); err != nil {
-				fmt.Fprintln(os.Stderr, "Could not query read migration:", err)
-				os.Exit(1)
-			}
+			err := rows.Scan(&m.Timestamp, &m.Label)
+			assert.Assertf(err == nil, "Could not query read migration: %s\r\n", err)
 			rollbacks = append(rollbacks, m)
 		}
 
 		tx, err := db.Begin()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Could not begin rollback transaction:", err)
-			os.Exit(1)
-		}
+		assert.Assertf(err == nil, "Could not begin rollback transaction: %s\r\n", err)
 		defer tx.Rollback()
 
 		dir := MigrationsDir()
 		for i, rollback := range rollbacks {
 			filename := fmt.Sprintf("%s-%s.down.sql", rollback.Timestamp, rollback.Label)
-			fmt.Fprintf(os.Stderr, "(%d:%d) Executing rollback '%s'\r\n", i+1, len(rollbacks), filename)
+			log.Printf("(%d:%d) Executing rollback '%s'\r\n", i+1, len(rollbacks), filename)
 
 			down, err := os.ReadFile(path.Join(dir, filename))
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Could not read rollback file '%s'\r\n", filename)
-				os.Exit(1)
-			}
+			assert.Assertf(err == nil, "Could not read rollback file '%s'\r\n", filename)
 
 			rollback.Down = string(down)
-			if err := migrations.Down(tx, rollback); err != nil {
-				fmt.Fprintln(os.Stderr, "Could not rollback migration: ", filename)
-				os.Exit(1)
-			}
+			err = migrations.Down(tx, rollback)
+			assert.Assertf(err == nil, "Could not rollback migration: %s\r\n", filename)
 		}
 
-		if err := tx.Commit(); err != nil {
-			fmt.Fprintln(os.Stderr, "Could not complete rollback")
-			os.Exit(1)
-		}
+		err = tx.Commit()
+		assert.Assert(err == nil, "Could not complete rollback")
 	},
 }
