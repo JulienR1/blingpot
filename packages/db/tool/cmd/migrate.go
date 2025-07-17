@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"io/fs"
 	"log"
 	"os"
@@ -37,7 +36,7 @@ var migrateCmd = &cobra.Command{
 		_ = db.
 			QueryRow("select timestamp, label from migrations order by timestamp desc limit 1;").
 			Scan(&latestMigration.Timestamp, &latestMigration.Label)
-		var latestMigrationFileName = fmt.Sprintf("%s-%s.up.sql", latestMigration.Timestamp, latestMigration.Label)
+		var latestMigrationFileName = latestMigration.Filename(migrations.UP)
 
 		var migrationsToExecute []migrations.Migration
 		var walkingNewMigrations = len(latestMigration.Timestamp) == 0
@@ -90,7 +89,7 @@ var migrateCmd = &cobra.Command{
 		defer tx.Rollback()
 
 		for i, migration := range migrationsToExecute {
-			fmt.Fprintf(os.Stderr, "(%d:%d) Executing up migration '%s'\r\n", i+1, len(migrationsToExecute), fmt.Sprintf("%s-%s.up.sql", migration.Timestamp, migration.Label))
+			log.Printf("(%d:%d) Executing up migration '%s'\r\n", i+1, len(migrationsToExecute), migration.Filename(migrations.UP))
 			err := migrations.Up(tx, migration)
 			assert.AssertErr(err)
 		}

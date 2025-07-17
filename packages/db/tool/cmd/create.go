@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 	"tool/internal/assert"
+	"tool/internal/migrations"
 
 	"github.com/spf13/cobra"
 )
@@ -18,12 +19,14 @@ var createCmd = &cobra.Command{
 	Short: "Create a new migration file",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		migrationName := args[0]
-		timestamp := strconv.Itoa(int(time.Now().Unix()))
+		migration := migrations.Migration{
+			Timestamp: strconv.Itoa(int(time.Now().Unix())),
+			Label:     args[0],
+		}
 
 		dir := MigrationsDir()
-		up := fmt.Sprintf("%s-%s.up.sql", timestamp, migrationName)
-		down := fmt.Sprintf("%s-%s.down.sql", timestamp, migrationName)
+		up := migration.Filename(migrations.UP)
+		down := migration.Filename(migrations.DOWN)
 
 		err := os.WriteFile(path.Join(dir, up), contents, 0644)
 		assert.Assertf(err == nil, "Could not write up migration file: %s\r\n", err)

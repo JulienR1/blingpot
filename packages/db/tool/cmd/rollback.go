@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path"
@@ -52,7 +51,7 @@ var rollbackCmd = &cobra.Command{
 
 		dir := MigrationsDir()
 		for i, rollback := range rollbacks {
-			filename := fmt.Sprintf("%s-%s.down.sql", rollback.Timestamp, rollback.Label)
+			filename := rollback.Filename(migrations.DOWN)
 			log.Printf("(%d:%d) Executing rollback '%s'\r\n", i+1, len(rollbacks), filename)
 
 			down, err := os.ReadFile(path.Join(dir, filename))

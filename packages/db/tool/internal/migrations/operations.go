@@ -3,21 +3,8 @@ package migrations
 import (
 	"database/sql"
 	"fmt"
+	"tool/internal/db"
 )
-
-type Migration struct {
-	Timestamp string
-	Label     string
-	Up        string
-	Down      string
-}
-
-type SQLQuerier interface {
-	Exec(query string, args ...any) (sql.Result, error)
-	Query(query string, args ...any) (*sql.Rows, error)
-	QueryRow(query string, args ...any) *sql.Row
-	Prepare(query string) (*sql.Stmt, error)
-}
 
 func EnsureExists(db *sql.DB) error {
 	rows, err := db.Query("select name from sqlite_master where type='table' and name='migrations';")
@@ -33,10 +20,9 @@ func EnsureExists(db *sql.DB) error {
 	}
 
 	return nil
-
 }
 
-func Up(db SQLQuerier, migration Migration) error {
+func Up(db db.Querier, migration Migration) error {
 	stmt, err := db.Prepare("insert into migrations (timestamp, label) values (?, ?);")
 	if err != nil {
 		return fmt.Errorf("Could not create insertion statement: %w", err)
@@ -44,28 +30,28 @@ func Up(db SQLQuerier, migration Migration) error {
 	defer stmt.Close()
 
 	if _, err = stmt.Exec(migration.Timestamp, migration.Label); err != nil {
-		return fmt.Errorf("Could not insert migration '%s': %w", migration.Label, err)
+		return fmt.Errorf("Could not insert migration '%s': %w", migration.Title(), err)
 	}
 
 	// Test if up migration is running
 	if _, err := db.Exec(migration.Up); err != nil {
-		return fmt.Errorf("Could not execute up migration ('%s'): %w", migration.Label, err)
+		return fmt.Errorf("Could not execute up migration ('%s'): %w", migration.Filename(UP), err)
 	}
 
 	// Validate that down migration is also valid given the previous up migration
 	if _, err := db.Exec(migration.Down); err != nil {
-		return fmt.Errorf("Could not execute down migration ('%s'): %w", migration.Label, err)
+		return fmt.Errorf("Could not execute down migration ('%s'): %w", migration.Filename(DOWN), err)
 	}
 
 	// If everything was fine, re-execute the up migration and continue
 	if _, err := db.Exec(migration.Up); err != nil {
-		return fmt.Errorf("Could not execute up migration ('%s'): %w", migration.Label, err)
+		return fmt.Errorf("Could not execute up migration ('%s'): %w", migration.Filename(UP), err)
 	}
 
 	return nil
 }
 
-func Down(db SQLQuerier, migration Migration) error {
+func Down(db db.Querier, migration Migration) error {
 	stmt, err := db.Prepare("delete from migrations where timestamp=? and label=?;")
 	if err != nil {
 		return fmt.Errorf("Could not create delete statement: %w", err)
@@ -73,11 +59,11 @@ func Down(db SQLQuerier, migration Migration) error {
 	defer stmt.Close()
 
 	if _, err = stmt.Exec(migration.Timestamp, migration.Label); err != nil {
-		return fmt.Errorf("Could not delete migration '%s': %w", migration.Label, err)
+		return fmt.Errorf("Could not delete migration '%s': %w", migration.Title(), err)
 	}
 
 	if _, err := db.Exec(migration.Down); err != nil {
-		return fmt.Errorf("Could not rollback migration ('%s'): %w", migration.Label, err)
+		return fmt.Errorf("Could not rollback migration ('%s'): %w", migration.Filename(DOWN), err)
 	}
 
 	return nil
