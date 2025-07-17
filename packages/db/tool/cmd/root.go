@@ -29,6 +29,8 @@ func init() {
 	rootCmd.AddCommand(createCmd)
 	rootCmd.AddCommand(checkCmd)
 	rootCmd.AddCommand(migrateCmd)
+
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
 }
 
 func Execute() {

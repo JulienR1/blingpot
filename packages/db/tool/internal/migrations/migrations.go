@@ -89,5 +89,9 @@ func Down(db *sql.DB, migration Migration) error {
 		return fmt.Errorf("Could not rollback migration ('%s'): %w", migration.Label, err)
 	}
 
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("Migration rollback failed: %w", err)
+	}
+
 	return nil
 }
