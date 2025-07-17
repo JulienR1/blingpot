@@ -13,6 +13,7 @@ import (
 
 var environmentFile string
 var connStr string
+var migrationDir string
 
 var rootCmd = &cobra.Command{
 	Use:   "tool",
@@ -21,12 +22,13 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&environmentFile, "env", "e", "", "Environment file location")
+	rootCmd.PersistentFlags().StringVarP(&environmentFile, "env", "e", ".env", "Environment file location")
 	rootCmd.PersistentFlags().StringVarP(&connStr, "conn", "c", "", "Database connection string")
-	rootCmd.MarkFlagsOneRequired("env", "conn")
+	rootCmd.PersistentFlags().StringVarP(&migrationDir, "migrations", "m", "", "Path to migration directory")
 
 	rootCmd.AddCommand(createCmd)
 	rootCmd.AddCommand(checkCmd)
+	rootCmd.AddCommand(migrateCmd)
 }
 
 func Execute() {
@@ -77,4 +79,26 @@ func Database(opts *DatabaseOptions) *sql.DB {
 	}
 
 	return db
+}
+
+func MigrationsDir() string {
+	if len(migrationDir) == 0 {
+		if err := godotenv.Load(environmentFile); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		migrationDir = os.Getenv("MIGRATIONS")
+	}
+
+	if len(migrationDir) == 0 {
+		fmt.Fprintln(os.Stderr, "migrations directory was not set")
+		os.Exit(1)
+	}
+
+	if _, err := os.Stat(migrationDir); err != nil {
+		fmt.Fprintln(os.Stderr, "could not find migrations directory")
+		os.Exit(1)
+	}
+
+	return migrationDir
 }
