@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 	"tool/internal/migrations"
@@ -91,27 +90,24 @@ var migrateCmd = &cobra.Command{
 			return
 		}
 
-		var migrationIndex = 0
-		var mustRevertMigrations = false
+		tx, err := db.Begin()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Could not begin migration transaction:", err)
+			os.Exit(1)
+		}
+		defer tx.Rollback()
 
-		for ; migrationIndex < len(migrationsToExecute); migrationIndex++ {
-			migration := migrationsToExecute[migrationIndex]
-			fmt.Fprintf(os.Stderr, "(%d:%d) Executing up migration '%s'\r\n", migrationIndex+1, len(migrationsToExecute), migration.Label)
-
-			if err := migrations.Up(db, migration); err != nil {
+		for i, migration := range migrationsToExecute {
+			fmt.Fprintf(os.Stderr, "(%d:%d) Executing up migration '%s'\r\n", i+1, len(migrationsToExecute), migration.Label)
+			if err := migrations.Up(tx, migration); err != nil {
 				fmt.Fprintln(os.Stderr, err)
-				mustRevertMigrations = true
-				break
+				os.Exit(1)
 			}
 		}
 
-		if mustRevertMigrations {
-			for _, migration := range slices.Backward(migrationsToExecute[:migrationIndex]) {
-				if err := migrations.Down(db, migration); err != nil {
-					fmt.Fprintln(os.Stderr, "Could not restore database to previous state", err)
-					os.Exit(1)
-				}
-			}
+		if err := tx.Commit(); err != nil {
+			fmt.Fprintln(os.Stderr, "Could not complete migration", err)
+			os.Exit(1)
 		}
 	},
 }
