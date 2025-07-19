@@ -3,11 +3,16 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/julienr1/blingpot/internal/assert"
+	"github.com/julienr1/blingpot/internal/database"
 	"github.com/julienr1/blingpot/internal/env"
+	"github.com/julienr1/blingpot/internal/profile"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -18,16 +23,6 @@ type Auth struct {
 	appUrl     string
 
 	config *oauth2.Config
-}
-
-type UserInfo struct {
-	Sub           string `json:"sub"`
-	Name          string `json:"name"`
-	GivenName     string `json:"given_name"`
-	FamilyName    string `json:"family_name"`
-	Picture       string `json:"picture"`
-	Email         string `json:"email"`
-	EmailVerified bool   `json:"email_verified"`
 }
 
 func New(serverUrl, appUrl string) *Auth {
@@ -50,6 +45,21 @@ func New(serverUrl, appUrl string) *Auth {
 }
 
 func (a *Auth) HandleAuth(w http.ResponseWriter, r *http.Request) {
+	if cookie, err := r.Cookie("Authorization"); err == nil {
+		token := cookie.Value
+		if VerifyToken(token) {
+			db, err := database.Open()
+			assert.AssertErr(err)
+			defer db.Close()
+
+			if profile, err := FindProfileFromToken(db, token); err == nil {
+				fmt.Println("Found connected profile:", profile, err)
+				http.Redirect(w, r, a.appUrl, http.StatusTemporaryRedirect)
+				return
+			}
+		}
+	}
+
 	a.verifiers[a.verifierId] = oauth2.GenerateVerifier()
 	state := strconv.Itoa(int(a.verifierId))
 	challenge := oauth2.S256ChallengeOption(a.verifiers[a.verifierId])
@@ -97,7 +107,39 @@ func (a *Auth) HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(userInfo, jwt)
+	db, err := database.Open()
+	if err != nil {
+		http.Error(w, "could not open database:"+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	_, err = profile.FindBySub(db, userInfo.Sub)
+	if errors.Is(err, profile.ProfileNotFound) {
+		tx, err := db.Begin()
+		if err != nil {
+			http.Error(w, "fail", http.StatusInternalServerError)
+			return
+		}
+		defer tx.Rollback()
+
+		if err := profile.Create(tx, userInfo.Sub, userInfo.GivenName, userInfo.FamilyName, userInfo.Email, userInfo.Picture); err != nil {
+			log.Println("HandleAuthCallback: could not create profile,", err)
+			http.Error(w, "could not create profile", http.StatusInternalServerError)
+			return
+		}
+
+		err = tx.Commit()
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "Authorization",
+		Value:    jwt,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   300,
+		HttpOnly: true,
+		Secure:   true,
+	})
 
 	http.Redirect(w, r, a.appUrl, http.StatusTemporaryRedirect)
 }
