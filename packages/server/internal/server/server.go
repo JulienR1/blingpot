@@ -6,6 +6,7 @@ import (
 
 	"github.com/julienr1/blingpot/internal/assert"
 	"github.com/julienr1/blingpot/internal/auth"
+	"github.com/julienr1/blingpot/internal/middlewares"
 	"github.com/rs/cors"
 )
 
@@ -15,9 +16,9 @@ func Run(config *ServerConfig) error {
 	mux := http.NewServeMux()
 
 	auth := auth.New(config.ServerUrl(), config.WebUrl)
-	mux.HandleFunc("GET /oauth2/authenticate", auth.HandleAuth)
+	mux.Handle("GET /oauth2/authenticate", middlewares.Authenticate(auth.HandleAuth, middlewares.Optional))
 	mux.HandleFunc("GET /oauth2/callback", auth.HandleAuthCallback)
-	mux.HandleFunc("POST /oauth2/revoke", auth.HandleRevoke)
+	mux.Handle("POST /oauth2/revoke", middlewares.Authenticated(auth.HandleRevoke))
 
 	mux.Handle("/*", http.RedirectHandler("/", http.StatusTemporaryRedirect))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

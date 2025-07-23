@@ -44,19 +44,10 @@ func New(serverUrl, appUrl string) *Auth {
 }
 
 func (a *Auth) HandleAuth(w http.ResponseWriter, r *http.Request) {
-	if cookie, err := r.Cookie("Authorization"); err == nil {
-		token := cookie.Value
-		if VerifyToken(token) {
-			db, err := database.Open()
-			assert.AssertErr(err)
-			defer db.Close()
-
-			if profile, err := FindProfileFromToken(db, token); err == nil && profile.ProviderToken.Valid {
-				fmt.Println("Found connected profile:", profile, err)
-				http.Redirect(w, r, a.appUrl, http.StatusTemporaryRedirect)
-				return
-			}
-		}
+	if p, ok := r.Context().Value("profile").(profile.Profile); ok {
+		fmt.Println("Found connected profile:", p)
+		http.Redirect(w, r, a.appUrl, http.StatusTemporaryRedirect)
+		return
 	}
 
 	a.verifiers[a.verifierId] = oauth2.GenerateVerifier()
@@ -127,21 +118,12 @@ func (a *Auth) HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Auth) HandleRevoke(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie("Authorization")
-	if err != nil {
-		http.Error(w, "no profile to disconnect", http.StatusBadRequest)
-		return
-	}
+	p, ok := r.Context().Value("profile").(profile.Profile)
+	assert.Assert(ok, "HandleRevoke: profile should have been set in context")
 
 	db, err := database.Open()
 	assert.AssertErr(err)
 	defer db.Close()
-
-	p, err := FindProfileFromToken(db, cookie.Value)
-	if err != nil {
-		http.Error(w, "could not authenticate profile", http.StatusBadRequest)
-		return
-	}
 
 	token, err := p.ProviderToken.Value()
 	if err != nil {
