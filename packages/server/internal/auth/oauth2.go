@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -52,7 +51,7 @@ func (a *Auth) HandleAuth(w http.ResponseWriter, r *http.Request) {
 			assert.AssertErr(err)
 			defer db.Close()
 
-			if profile, err := FindProfileFromToken(db, token); err == nil {
+			if profile, err := FindProfileFromToken(db, token); err == nil && profile.ProviderToken.Valid {
 				fmt.Println("Found connected profile:", profile, err)
 				http.Redirect(w, r, a.appUrl, http.StatusTemporaryRedirect)
 				return
@@ -107,29 +106,12 @@ func (a *Auth) HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := database.Open()
-	if err != nil {
-		http.Error(w, "could not open database:"+err.Error(), http.StatusInternalServerError)
+	if err = database.Transaction(func(tx database.Querier) error {
+		return profile.StoreProfile(tx, userInfo.Sub, userInfo.GivenName, userInfo.FamilyName, userInfo.Email, userInfo.Picture, token)
+	}); err != nil {
+		log.Println("HandleAuthCallback: could not create profile,", err)
+		http.Error(w, "could not create profile", http.StatusInternalServerError)
 		return
-	}
-	defer db.Close()
-
-	_, err = profile.FindBySub(db, userInfo.Sub)
-	if errors.Is(err, profile.ProfileNotFound) {
-		tx, err := db.Begin()
-		if err != nil {
-			http.Error(w, "fail", http.StatusInternalServerError)
-			return
-		}
-		defer tx.Rollback()
-
-		if err := profile.Create(tx, userInfo.Sub, userInfo.GivenName, userInfo.FamilyName, userInfo.Email, userInfo.Picture); err != nil {
-			log.Println("HandleAuthCallback: could not create profile,", err)
-			http.Error(w, "could not create profile", http.StatusInternalServerError)
-			return
-		}
-
-		err = tx.Commit()
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -145,9 +127,29 @@ func (a *Auth) HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *Auth) HandleRevoke(w http.ResponseWriter, r *http.Request) {
-	var token = ""
-	url := fmt.Sprintf("https://oauth2.googleapis.com/revoke?token=%s", token)
+	cookie, err := r.Cookie("Authorization")
+	if err != nil {
+		http.Error(w, "no profile to disconnect", http.StatusBadRequest)
+		return
+	}
 
+	db, err := database.Open()
+	assert.AssertErr(err)
+	defer db.Close()
+
+	p, err := FindProfileFromToken(db, cookie.Value)
+	if err != nil {
+		http.Error(w, "could not authenticate profile", http.StatusBadRequest)
+		return
+	}
+
+	token, err := p.ProviderToken.Value()
+	if err != nil {
+		http.Error(w, "could not find provider token for profile", http.StatusInternalServerError)
+		return
+	}
+
+	url := fmt.Sprintf("https://oauth2.googleapis.com/revoke?token=%s", token)
 	request, err := http.NewRequest("POST", url, nil)
 	if err != nil {
 		http.Error(w, "could not revoke token", http.StatusInternalServerError)
@@ -161,4 +163,20 @@ func (a *Auth) HandleRevoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	response.Body.Close()
+
+	if err = profile.ClearProviderToken(db, p.Sub); err != nil {
+		http.Error(w, "local token was not revoked", http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "Authorization",
+		Value:    "",
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+	})
+
+	w.WriteHeader(http.StatusOK)
 }
