@@ -18,6 +18,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
+        env:
+          VITE_SERVER_URL: ${{ vars.SERVER_URL }}
 
   server:
     runs-on: ubuntu-latest
