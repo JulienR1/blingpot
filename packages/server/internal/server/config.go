@@ -18,9 +18,9 @@ type ServerConfig struct {
 }
 
 func (config *ServerConfig) Endpoint() string {
-	return fmt.Sprintf("%s:%d", config.Domain, config.Port)
+	return fmt.Sprintf(":%d", config.Port)
 }
 
 func (config *ServerConfig) ServerUrl() string {
-	return fmt.Sprintf("%s://%s", config.Protocol, config.Endpoint())
+	return fmt.Sprintf("%s://%s:%d", config.Protocol, config.Domain, config.Port)
 }

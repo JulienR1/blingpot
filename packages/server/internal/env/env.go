@@ -13,8 +13,10 @@ var JwtSecret []byte
 var DbConnStr string
 
 func Load() {
-	err := godotenv.Load()
-	assert.AssertErr(err)
+	if os.Getenv("READ_ENV_FILE") != "skip" {
+		err := godotenv.Load()
+		assert.AssertErr(err)
+	}
 
 	OauthClientId = env("OAUTH_CLIENT_ID")
 	OauthClientSecret = env("OAUTH_CLIENT_SECRET")
