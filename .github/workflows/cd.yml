@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - run: npm ci
-      - run: npm run build
+      - run: npm run build -- --base /blingpot/
         env:
           VITE_SERVER_URL: ${{ vars.SERVER_URL }}
 
