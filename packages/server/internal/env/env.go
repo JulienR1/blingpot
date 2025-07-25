@@ -16,6 +16,8 @@ var Mode string
 var Domain string
 var WebUrl string
 
+var CorsAllowed string
+
 func Load() {
 	if os.Getenv("READ_ENV_FILE") != "skip" {
 		err := godotenv.Load()
@@ -30,6 +32,8 @@ func Load() {
 	Mode = env("MODE", "dev")
 	Domain = env("DOMAIN", "localhost:8888")
 	WebUrl = env("WEB_URL", "http://localhost:5173")
+
+	CorsAllowed = env("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
 }
 
 func env(key, fallback string) string {
