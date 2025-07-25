@@ -28,7 +28,7 @@ func Load() {
 	DbConnStr = env("DB_CONN_STR", "")
 
 	Mode = env("MODE", "dev")
-	Domain = env("DOMAIN", "localhost")
+	Domain = env("DOMAIN", "localhost:8888")
 	WebUrl = env("WEB_URL", "http://localhost:5173")
 }
 
