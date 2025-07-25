@@ -108,7 +108,6 @@ func (a *Auth) HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "Authorization",
 		Value:    jwt,
-		SameSite: http.SameSiteStrictMode,
 		MaxAge:   300,
 		HttpOnly: true,
 		Secure:   true,
@@ -154,7 +153,6 @@ func (a *Auth) HandleRevoke(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "Authorization",
 		Value:    "",
-		SameSite: http.SameSiteStrictMode,
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   true,
