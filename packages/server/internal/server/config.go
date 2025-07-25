@@ -22,5 +22,5 @@ func (config *ServerConfig) Endpoint() string {
 }
 
 func (config *ServerConfig) ServerUrl() string {
-	return fmt.Sprintf("%s://%s", config.Protocol, config.Domain, config.Port)
+	return fmt.Sprintf("%s://%s", config.Protocol, config.Domain)
 }
