@@ -7,15 +7,19 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var config = server.ServerConfig{
-	Protocol: server.HTTP,
-	Domain:   "localhost",
-	Port:     8888,
-	WebUrl:   "http://localhost:5173",
-}
-
 func main() {
 	env.Load()
+
+	var config = server.ServerConfig{
+		Protocol: server.HTTPS,
+		Domain:   env.Domain,
+		Port:     8888,
+		WebUrl:   env.WebUrl,
+	}
+
+	if env.Mode == "dev" {
+		config.Protocol = server.HTTP
+	}
 
 	err := server.Run(&config)
 	assert.AssertErr(err)
