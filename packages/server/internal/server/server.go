@@ -20,6 +20,8 @@ func Run(config *ServerConfig) error {
 	http.Handle("POST /oauth2/refresh", middlewares.Authenticated(auth.HandleRefresh))
 	http.Handle("POST /oauth2/revoke", middlewares.Authenticated(auth.HandleRevoke))
 
+	http.Handle("GET /profiles/me", middlewares.Authenticated(profile.HandleFindMe))
+
 	fs := http.FileServer(http.Dir(fmt.Sprintf("%s/assets", config.WebDir)))
 	http.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
