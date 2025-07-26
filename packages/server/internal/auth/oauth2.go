@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/julienr1/blingpot/internal/assert"
 	"github.com/julienr1/blingpot/internal/database"
@@ -44,7 +45,7 @@ func New(url string) *Auth {
 func (a *Auth) HandleAuth(w http.ResponseWriter, r *http.Request) {
 	if p, ok := r.Context().Value("profile").(profile.Profile); ok {
 		fmt.Println("Found connected profile:", p)
-		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
@@ -54,7 +55,7 @@ func (a *Auth) HandleAuth(w http.ResponseWriter, r *http.Request) {
 	a.verifierId++
 
 	url := a.config.AuthCodeURL(state, oauth2.AccessTypeOffline, challenge)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, url, http.StatusFound)
 }
 
 func (a *Auth) HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
@@ -106,13 +107,24 @@ func (a *Auth) HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "Authorization",
 		Value:    jwt,
-		MaxAge:   300,
+		Expires:  time.Now().Add(5 * time.Minute),
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
+		Path:     "/",
 	})
 
-	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+func (a *Auth) HandleRefresh(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("Authorization")
+	assert.AssertErr(err)
+
+	cookie.Path = "/"
+	cookie.Expires = time.Now().Add(5 * time.Minute)
+	http.SetCookie(w, cookie)
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (a *Auth) HandleRevoke(w http.ResponseWriter, r *http.Request) {
@@ -151,11 +163,11 @@ func (a *Auth) HandleRevoke(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "Authorization",
-		Value:    "",
-		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
+		Path:     "/",
+		MaxAge:   -1,
 	})
 
 	w.WriteHeader(http.StatusOK)
