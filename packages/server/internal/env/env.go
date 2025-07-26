@@ -14,9 +14,8 @@ var DbConnStr string
 
 var Mode string
 var Domain string
-var WebUrl string
 
-var CorsAllowed string
+var WebDir string
 
 func Load() {
 	if os.Getenv("READ_ENV_FILE") != "skip" {
@@ -31,9 +30,8 @@ func Load() {
 
 	Mode = env("MODE", "dev")
 	Domain = env("DOMAIN", "localhost:8888")
-	WebUrl = env("WEB_URL", "http://localhost:5173")
 
-	CorsAllowed = env("CORS_ALLOWED_ORIGINS", "http://localhost:5173")
+	WebDir = env("WEB_DIR", "../web/dist")
 }
 
 func env(key, fallback string) string {

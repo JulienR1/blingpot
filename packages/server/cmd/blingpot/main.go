@@ -14,7 +14,7 @@ func main() {
 		Protocol: server.HTTPS,
 		Domain:   env.Domain,
 		Port:     8888,
-		WebUrl:   env.WebUrl,
+		WebDir:   env.WebDir,
 	}
 
 	if env.Mode == "dev" {

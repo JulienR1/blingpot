@@ -35,12 +35,28 @@ RUN CGO_ENABLED=1 GOOS=linux go build -o /blingpot ./cmd/blingpot/main.go
 
 ##################
 
+FROM node:24-alpine3.21 AS build-web
+
+WORKDIR /app
+
+COPY packages/web/package.json .
+COPY packages/web/package-lock.json .
+
+RUN npm ci
+
+COPY packages/web ./
+
+RUN npm run build
+
+##################
+
 FROM alpine:latest AS release
 
 WORKDIR /
 
 COPY --from=build-db /dbtool /dbtool
 COPY --from=build-server /blingpot /blingpot
+COPY --from=build-web /app/dist/ /app/web/
 
 COPY packages/db/migrations ./app/migrations/
 

@@ -19,16 +19,14 @@ import (
 type Auth struct {
 	verifierId uint8
 	verifiers  map[uint8]string
-	appUrl     string
 
 	config *oauth2.Config
 }
 
-func New(serverUrl, appUrl string) *Auth {
+func New(url string) *Auth {
 	return &Auth{
 		verifierId: 0,
 		verifiers:  make(map[uint8]string),
-		appUrl:     appUrl,
 
 		config: &oauth2.Config{
 			ClientID:     env.OauthClientId,
@@ -38,7 +36,7 @@ func New(serverUrl, appUrl string) *Auth {
 				"https://www.googleapis.com/auth/userinfo.profile",
 			},
 			Endpoint:    google.Endpoint,
-			RedirectURL: fmt.Sprintf("%s/oauth2/callback", serverUrl),
+			RedirectURL: fmt.Sprintf("%s/oauth2/callback", url),
 		},
 	}
 }
@@ -46,7 +44,7 @@ func New(serverUrl, appUrl string) *Auth {
 func (a *Auth) HandleAuth(w http.ResponseWriter, r *http.Request) {
 	if p, ok := r.Context().Value("profile").(profile.Profile); ok {
 		fmt.Println("Found connected profile:", p)
-		http.Redirect(w, r, a.appUrl, http.StatusTemporaryRedirect)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
 
@@ -111,9 +109,10 @@ func (a *Auth) HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   300,
 		HttpOnly: true,
 		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
 	})
 
-	http.Redirect(w, r, a.appUrl, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
 func (a *Auth) HandleRevoke(w http.ResponseWriter, r *http.Request) {
@@ -156,6 +155,7 @@ func (a *Auth) HandleRevoke(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
 	})
 
 	w.WriteHeader(http.StatusOK)

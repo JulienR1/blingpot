@@ -1,38 +1,31 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/julienr1/blingpot/internal/assert"
 	"github.com/julienr1/blingpot/internal/auth"
-	"github.com/julienr1/blingpot/internal/env"
 	"github.com/julienr1/blingpot/internal/middlewares"
-	"github.com/rs/cors"
 )
 
 func Run(config *ServerConfig) error {
 	assert.Assert(config != nil, "server config is nil")
 
-	mux := http.NewServeMux()
+	auth := auth.New(config.ServerUrl())
+	http.Handle("GET /oauth2/authenticate", middlewares.Authenticate(auth.HandleAuth, middlewares.Optional))
+	http.HandleFunc("GET /oauth2/callback", auth.HandleAuthCallback)
+	http.Handle("POST /oauth2/revoke", middlewares.Authenticated(auth.HandleRevoke))
 
-	auth := auth.New(config.ServerUrl(), config.WebUrl)
-	mux.Handle("GET /oauth2/authenticate", middlewares.Authenticate(auth.HandleAuth, middlewares.Optional))
-	mux.HandleFunc("GET /oauth2/callback", auth.HandleAuthCallback)
-	mux.Handle("POST /oauth2/revoke", middlewares.Authenticated(auth.HandleRevoke))
+	fs := http.FileServer(http.Dir(fmt.Sprintf("%s/assets", config.WebDir)))
+	http.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
-	mux.Handle("/*", http.RedirectHandler("/", http.StatusTemporaryRedirect))
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
+	http.Handle("/*", http.RedirectHandler("/", http.StatusTemporaryRedirect))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, fmt.Sprintf("%s/index.html", config.WebDir))
 	})
 
-	handler := cors.New(cors.Options{
-		AllowedOrigins:   strings.Split(env.CorsAllowed, ","),
-		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
-		AllowCredentials: true,
-	}).Handler(mux)
-
 	log.Println("Listening on", config.ServerUrl())
-	return http.ListenAndServe(config.Endpoint(), handler)
+	return http.ListenAndServe(config.Endpoint(), nil)
 }

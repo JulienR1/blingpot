@@ -14,7 +14,7 @@ type ServerConfig struct {
 	Domain   string
 	Port     int
 
-	WebUrl string
+	WebDir string
 }
 
 func (config *ServerConfig) Endpoint() string {
