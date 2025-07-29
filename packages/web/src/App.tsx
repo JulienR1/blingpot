@@ -1,10 +1,5 @@
-import {
-  QueryClientProvider,
-  QueryClient,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { useCallback } from "react";
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import { useDisconnect, useProfile } from "./stores/profile";
 
 const queryClient = new QueryClient();
 
@@ -22,25 +17,12 @@ function App() {
 }
 
 function Disconnect() {
-  const q = useQueryClient();
-
-  const disconnect = useCallback(async () => {
-    await fetch("/oauth2/revoke", { method: "post", credentials: "include" });
-    q.invalidateQueries({ queryKey: ["user-profile"] });
-  }, [q]);
-
+  const disconnect = useDisconnect();
   return <button onClick={disconnect}>disconnect</button>;
 }
 
 function Profile() {
-  const profile = useQuery({
-    queryKey: ["user-profile"],
-    queryFn: () =>
-      fetch("/profiles/me", { credentials: "include" })
-        .then((res) => res.json())
-        .catch(() => null),
-  });
-
+  const profile = useProfile();
   return <pre>{JSON.stringify(profile.data, null, 2)}</pre>;
 }
 

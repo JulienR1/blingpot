@@ -14,5 +14,4 @@ func Json(w http.ResponseWriter, data any) {
 		http.Error(w, "could not marshal data", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
 }
