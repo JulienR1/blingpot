@@ -1,6 +1,6 @@
-package auth
+package dtos
 
-type UserInfo struct {
+type OauthUserInfo struct {
 	Sub           string `json:"sub"`
 	Name          string `json:"name"`
 	GivenName     string `json:"given_name"`

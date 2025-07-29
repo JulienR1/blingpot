@@ -1,12 +1,21 @@
 package profile
 
 import (
-	"fmt"
 	"net/http"
+
+	"github.com/julienr1/blingpot/internal/dtos"
+	"github.com/julienr1/blingpot/internal/response"
 )
 
 func HandleFindMe(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r.Context().Value("profile").(Profile))
+	p := r.Context().Value("profile").(Profile)
 
-	w.WriteHeader(http.StatusOK)
+	response.Json(w,
+		dtos.Profile{
+			FirstName: p.FirstName,
+			LastName:  p.LastName,
+			Email:     p.Email,
+			Picture:   dtos.NullString(p.Picture),
+		},
+	)
 }

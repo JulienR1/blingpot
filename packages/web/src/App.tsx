@@ -37,7 +37,7 @@ function Profile() {
     queryKey: ["user-profile"],
     queryFn: () =>
       fetch("/profiles/me", { credentials: "include" })
-        .then((res) => res.text())
+        .then((res) => res.json())
         .catch(() => null),
   });
 

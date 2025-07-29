@@ -11,6 +11,7 @@ import (
 
 	"github.com/julienr1/blingpot/internal/assert"
 	"github.com/julienr1/blingpot/internal/database"
+	"github.com/julienr1/blingpot/internal/dtos"
 	"github.com/julienr1/blingpot/internal/env"
 	"github.com/julienr1/blingpot/internal/profile"
 	"golang.org/x/oauth2"
@@ -83,7 +84,7 @@ func (a *Auth) HandleAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userInfo UserInfo
+	var userInfo dtos.OauthUserInfo
 	err = json.NewDecoder(request.Body).Decode(&userInfo)
 	if err != nil {
 		http.Error(w, "could not parse user info: "+err.Error(), http.StatusInternalServerError)
