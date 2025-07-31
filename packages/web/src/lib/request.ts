@@ -33,6 +33,7 @@ export function request<T extends ResponseType = "json">(
   url: string,
   type?: T,
 ): ReturnType<typeof fcts>[T extends "json" ? "json" : T] {
+  // eslint-disable-next-line
   return fcts(url)[type ?? "json"] as any;
 }
 

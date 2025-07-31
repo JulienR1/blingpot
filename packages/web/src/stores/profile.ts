@@ -1,5 +1,5 @@
 import { request } from "@/lib/request";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import z from "zod";
 
@@ -12,14 +12,15 @@ const ProfileSchema = z.object({
   picture: z.string().nullable(),
 });
 
+export type Profile = z.infer<typeof ProfileSchema>;
+
 const fetchUserProfile = () => request("/profiles/me").get(ProfileSchema);
 const disconnect = () => request("/oauth2/revoke", "none").post();
 
-export const useProfile = () =>
-  useQuery({
-    queryKey: [USER_PROFILE],
-    queryFn: fetchUserProfile,
-  });
+export const query = queryOptions({
+  queryKey: [USER_PROFILE],
+  queryFn: fetchUserProfile,
+});
 
 export const useDisconnect = () => {
   const client = useQueryClient();
