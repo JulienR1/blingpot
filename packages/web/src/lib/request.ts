@@ -55,10 +55,9 @@ async function execute<S extends z.ZodType>(
       return null;
     }
 
-    const promise = type === "json" ? response.json : response.text;
-    const data = await promise();
-    return schema.parse(data);
-  } catch {
+    const data = type === "json" ? response.json() : response.text();
+    return schema.parse(await data);
+  } catch (er) {
     return null;
   }
 }
