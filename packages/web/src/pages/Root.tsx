@@ -12,8 +12,8 @@ function Root() {
   const authenticated = profile != null;
 
   return authenticated ? (
-    <a href="/oauth2/authenticate">connect!</a>
-  ) : (
     <Outlet />
+  ) : (
+    <a href="/oauth2/authenticate">connect!</a>
   );
 }
