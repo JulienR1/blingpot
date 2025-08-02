@@ -8,6 +8,7 @@ import (
 	"github.com/julienr1/blingpot/internal/assert"
 	"github.com/julienr1/blingpot/internal/auth"
 	"github.com/julienr1/blingpot/internal/middlewares"
+	"github.com/julienr1/blingpot/internal/profile"
 )
 
 func Run(config *ServerConfig) error {
