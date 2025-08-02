@@ -1,6 +1,6 @@
 import { createRoute, Link } from "@tanstack/react-router";
-import { root } from ".";
 import { useDisconnect } from "@/stores/profile";
+import { root } from "./Root";
 
 function NewTransaction() {
   const disconnect = useDisconnect();

@@ -17,7 +17,7 @@ export type Profile = z.infer<typeof ProfileSchema>;
 const fetchUserProfile = () => request("/profiles/me").get(ProfileSchema);
 const disconnect = () => request("/oauth2/revoke", "none").post();
 
-export const query = queryOptions({
+export const profileQuery = queryOptions({
   queryKey: [USER_PROFILE],
   queryFn: fetchUserProfile,
 });

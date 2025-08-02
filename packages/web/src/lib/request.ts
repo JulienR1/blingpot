@@ -25,7 +25,7 @@ const fcts = (url: string) => ({
   ),
   none: make(
     (method) => (opts?: RequestOptions) =>
-      execute(url, "none", method, z.never(), opts),
+      execute(url, "none", method, z.null(), opts),
   ),
 });
 
@@ -55,7 +55,8 @@ async function execute<S extends z.ZodType>(
       return null;
     }
 
-    const data = await (type === "json" ? response.json() : response.text());
+    const promise = type === "json" ? response.json : response.text;
+    const data = await promise();
     return schema.parse(data);
   } catch {
     return null;
