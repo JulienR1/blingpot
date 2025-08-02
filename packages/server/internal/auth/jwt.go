@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/julienr1/blingpot/internal/database"
+	"github.com/julienr1/blingpot/internal/dtos"
 	"github.com/julienr1/blingpot/internal/env"
 	"github.com/julienr1/blingpot/internal/profile"
 )
@@ -14,7 +15,7 @@ import (
 var InvalidTokenErr = errors.New("Could not parse or verify token")
 var MalformedTokenErr = errors.New("Could not find field on token")
 
-func CreateToken(user *UserInfo) (string, error) {
+func CreateToken(user *dtos.OauthUserInfo) (string, error) {
 	exp := jwt.NewNumericDate(time.Now().Add(time.Minute * 10))
 	claims := jwt.RegisteredClaims{Subject: user.Sub, ExpiresAt: exp}
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(env.JwtSecret)
