@@ -1,7 +1,7 @@
 import { createRoute, Link } from "@tanstack/react-router";
-import { root } from "./Root";
+import { root } from "./root";
 
-function Index() {
+function Home() {
   return (
     <>
       <p>log in or do something idk</p>
@@ -10,8 +10,8 @@ function Index() {
   );
 }
 
-export const index = createRoute({
+export const home = createRoute({
   getParentRoute: () => root,
   path: "/",
-  component: Index,
+  component: Home,
 });

@@ -1,6 +1,8 @@
 import z from "zod";
 
-type RequestOptions = Omit<RequestInit, "method" | "credentials">;
+type Body = { body?: Record<string, unknown> };
+type RequestOptions = Omit<RequestInit, "method" | "credentials" | "body"> &
+  Body;
 type ResponseType = "json" | "text" | "none";
 
 const methods = ["get", "post", "put", "delete"] as const;
@@ -42,13 +44,14 @@ async function execute<S extends z.ZodType>(
   type: ResponseType,
   method: string,
   schema: S,
-  opts: RequestInit = {},
+  opts: Omit<RequestInit, "body"> & Body = {},
 ) {
   try {
     const response = await fetch(url, {
       method,
       credentials: "include",
       ...opts,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
     });
 
     if (type === "none") {

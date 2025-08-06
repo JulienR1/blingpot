@@ -1,7 +1,7 @@
 import { createRouter } from "@tanstack/react-router";
-import { root, index, newTransaction } from "./pages";
+import { root, home, newExpense } from "./pages";
 
-const routeTree = root.addChildren([index, newTransaction]);
+const routeTree = root.addChildren([home, newExpense]);
 export const router = createRouter({
   routeTree,
   context: { queryClient: undefined! },
