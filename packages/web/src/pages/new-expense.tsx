@@ -99,9 +99,17 @@ function NewExpense() {
             )}
           </form.AppField>
 
-          <form.AppForm>
-            <form.Button type="submit">Enregistrer</form.Button>
-          </form.AppForm>
+          <form.Subscribe
+            selector={(state) => [state.canSubmit, state.isSubmitting]}
+            children={([canSubmit, isSubmitting]) => (
+              <form.SubmitButton
+                canSubmit={canSubmit}
+                isSubmitting={isSubmitting}
+              >
+                {isSubmitting ? "Enregistrement en cours" : "Enregistrer"}
+              </form.SubmitButton>
+            )}
+          />
         </form>
       </div>
     </>
