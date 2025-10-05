@@ -5,11 +5,13 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { profileQuery, profilesQuery } from "@/stores/profile";
 import { useAppForm } from "@/components/ui/form";
 import { useCreate } from "@/stores/expense";
+import { categoriesQuery } from "@/stores/category";
 
 function NewExpense() {
   const create = useCreate();
   const profile = useSuspenseQuery(profileQuery);
   const profiles = useSuspenseQuery(profilesQuery);
+  const categories = useSuspenseQuery(categoriesQuery);
 
   const form = useAppForm({
     defaultValues: {
