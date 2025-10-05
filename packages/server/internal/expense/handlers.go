@@ -9,16 +9,18 @@ import (
 
 	"github.com/go-playground/validator"
 	"github.com/julienr1/blingpot/internal/assert"
+	"github.com/julienr1/blingpot/internal/category"
 	"github.com/julienr1/blingpot/internal/database"
 	"github.com/julienr1/blingpot/internal/profile"
 	"github.com/julienr1/blingpot/internal/response"
 )
 
 type CreateExpenseBody struct {
-	Label     string `json:"label" validate:"required,min=1"`
-	Amount    int    `json:"amount" validate:"required,number,gt=0"`
-	SpenderId string `json:"spenderId" validate:"required,min=1,alphanum"`
-	Timestamp int64  `json:"timestamp" validate:"required,number"`
+	Label      string `json:"label" validate:"required,min=1"`
+	Amount     int    `json:"amount" validate:"required,number,gt=0"`
+	SpenderId  string `json:"spenderId" validate:"required,min=1,alphanum"`
+	Timestamp  int64  `json:"timestamp" validate:"required,number"`
+	CategoryId *int   `json:"categoryId" validate:"optional_num,min=1"`
 }
 
 type CreateResponseBody struct {
@@ -50,8 +52,15 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var c *category.Category = nil
+	if body.CategoryId != nil {
+		if c, err = category.FindById(db, *body.CategoryId); err != nil {
+			http.Error(w, "specified category does not exist", http.StatusBadRequest)
+		}
+	}
+
 	timestamp := time.Unix(body.Timestamp, 0)
-	id, err := Create(db, body.Label, body.Amount, timestamp, spender, &p)
+	id, err := Create(db, body.Label, body.Amount, timestamp, spender, &p, c)
 	if err != nil {
 		log.Printf("could not create expense: %s\r\n", err.Error())
 		http.Error(w, "could not create expense", http.StatusInternalServerError)
