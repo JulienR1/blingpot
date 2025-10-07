@@ -33,8 +33,6 @@ export const useCreate = () => {
         categoryId,
       };
 
-      // TODO: find why category id is always null :/
-
       const id = await request("/expenses").post(CreateResponse, { body });
       if (id != null) {
         q.invalidateQueries({ queryKey: [EXPENSES, id] });

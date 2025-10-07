@@ -53,8 +53,26 @@ function NewExpense() {
           .nullable(),
       }),
     },
-    onSubmit: ({ value }) => create(value),
+    onSubmit: ({ value }) => create(value).then(() => form.reset()),
   });
+
+  const profileOptions = useMemo(
+    () =>
+      profiles.data.map((profile) => ({
+        label: profile.firstName + " " + profile.lastName,
+        value: profile.sub,
+      })),
+    [profiles.data],
+  );
+
+  const categoryOptions = useMemo(
+    () =>
+      categories.data.map((category) => ({
+        label: category.label,
+        value: category.id,
+      })),
+    [categories.data],
+  );
 
   return (
     <>
@@ -98,10 +116,7 @@ function NewExpense() {
                     placeholder: "Trouver une catégorie",
                     empty: "Aucune catégorie ne correspond",
                   }}
-                  options={categories.data.map((category) => ({
-                    label: category.label,
-                    value: category.id,
-                  }))}
+                  options={categoryOptions}
                 />
                 <form.FieldError />
               </>
@@ -128,10 +143,7 @@ function NewExpense() {
                     placeholder: "Trouver une personne",
                     empty: "Aucune personne ne correspond",
                   }}
-                  options={profiles.data.map((profile) => ({
-                    label: profile.firstName + " " + profile.lastName,
-                    value: profile.sub,
-                  }))}
+                  options={profileOptions}
                 />
                 <form.FieldError />
               </>

@@ -1,6 +1,5 @@
 import * as React from "react";
 import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,12 +23,29 @@ interface ComboboxProps<T> {
   options: Array<{ value: T; label: string }>;
 }
 
+// @ts-expect-error
+const score = (await import("command-score")).default as (
+  word: string,
+  abbreviation: string,
+) => number;
+
 export function Combobox<T extends string | number>({
   placeholder,
   search,
   options,
 }: ComboboxProps<T>) {
   const field = useFieldContext<T>();
+  const valuesToLabels = React.useMemo(
+    () =>
+      options.reduce(
+        (acc, current) => ({
+          ...acc,
+          [current.value.toString()]: current.label,
+        }),
+        {} as Record<string, string>,
+      ),
+    [options],
+  );
 
   const [open, setOpen] = React.useState(false);
 
@@ -50,7 +66,11 @@ export function Combobox<T extends string | number>({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[200px] p-0">
-        <Command>
+        <Command
+          filter={(value, search) => {
+            return score(valuesToLabels[value], search);
+          }}
+        >
           <CommandInput placeholder={search.placeholder} />
           <CommandList>
             <CommandEmpty>{search.empty}</CommandEmpty>
