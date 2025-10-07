@@ -1,3 +1,3 @@
-export * from "./Root";
-export * from "./Index";
-export * from "./NewTransaction";
+export * from "./root";
+export * from "./home";
+export * from "./new-expense";

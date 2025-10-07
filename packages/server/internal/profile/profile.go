@@ -7,6 +7,7 @@ import (
 
 	"github.com/julienr1/blingpot/internal/assert"
 	"github.com/julienr1/blingpot/internal/database"
+	"github.com/julienr1/blingpot/internal/dtos"
 	"golang.org/x/oauth2"
 )
 
@@ -45,6 +46,28 @@ func FindBySub(db database.Querier, sub string) (*Profile, error) {
 	}
 
 	return &p, nil
+}
+
+func FindAll(db database.Querier) ([]Profile, error) {
+	stmt, err := db.Prepare("select sub, first_name, last_name, email, picture from profiles;")
+	assert.AssertErr(err)
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return []Profile{}, fmt.Errorf("profile.FindAll: %w", err)
+	}
+
+	var profiles []Profile
+	for rows.Next() {
+		var p Profile
+		if err = rows.Scan(&p.Sub, &p.FirstName, &p.LastName, &p.Email, &p.Picture); err != nil {
+			return []Profile{}, fmt.Errorf("profile.FindAll: %w", err)
+		}
+		profiles = append(profiles, p)
+	}
+
+	return profiles, nil
 }
 
 func Create(db database.Querier, sub, firstName, lastName, email, picture string) error {
@@ -113,4 +136,14 @@ func ClearProviderToken(db database.Querier, sub string) error {
 	}
 
 	return nil
+}
+
+func (p Profile) Dto() dtos.Profile {
+	return dtos.Profile{
+		Sub:       p.Sub,
+		FirstName: p.FirstName,
+		LastName:  p.LastName,
+		Email:     p.Email,
+		Picture:   dtos.NullString(p.Picture),
+	}
 }

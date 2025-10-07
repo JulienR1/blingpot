@@ -1,4 +1,4 @@
-package profile
+package category
 
 import (
 	"log"
@@ -10,26 +10,21 @@ import (
 	"github.com/julienr1/blingpot/internal/response"
 )
 
-func HandleFindMe(w http.ResponseWriter, r *http.Request) {
-	p := r.Context().Value("profile").(Profile)
-	response.Json(w, p.Dto())
-}
-
 func HandleFindAll(w http.ResponseWriter, r *http.Request) {
 	db, err := database.Open()
 	assert.AssertErr(err)
 	defer db.Close()
 
-	profiles, err := FindAll(db)
+	categories, err := FindAll(db)
 	if err != nil {
-		log.Println("HandleFindAll: could not fetch profiles:", err)
-		http.Error(w, "could not fetch profiles", http.StatusInternalServerError)
+		log.Println("HandleFindAll: could not fetch categories:", err)
+		http.Error(w, "could not fetch categories", http.StatusInternalServerError)
 		return
 	}
 
-	payload := make([]dtos.Profile, len(profiles))
-	for i, p := range profiles {
-		payload[i] = p.Dto()
+	payload := make([]dtos.Category, len(categories))
+	for i, c := range categories {
+		payload[i] = c.Dto()
 	}
 
 	response.Json(w, payload)

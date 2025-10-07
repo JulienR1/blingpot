@@ -7,6 +7,8 @@ import (
 
 	"github.com/julienr1/blingpot/internal/assert"
 	"github.com/julienr1/blingpot/internal/auth"
+	"github.com/julienr1/blingpot/internal/category"
+	"github.com/julienr1/blingpot/internal/expense"
 	"github.com/julienr1/blingpot/internal/middlewares"
 	"github.com/julienr1/blingpot/internal/profile"
 )
@@ -20,7 +22,12 @@ func Run(config *ServerConfig) error {
 	http.Handle("POST /oauth2/refresh", middlewares.Authenticated(auth.HandleRefresh))
 	http.Handle("POST /oauth2/revoke", middlewares.Authenticated(auth.HandleRevoke))
 
+	http.Handle("GET /profiles", middlewares.Authenticated(profile.HandleFindAll))
 	http.Handle("GET /profiles/me", middlewares.Authenticated(profile.HandleFindMe))
+
+	http.Handle("GET /categories", middlewares.Authenticated(category.HandleFindAll))
+
+	http.Handle("POST /expenses", middlewares.Authenticated(expense.HandleCreate))
 
 	fs := http.FileServer(http.Dir(fmt.Sprintf("%s/assets", config.WebDir)))
 	http.Handle("/assets/", http.StripPrefix("/assets/", fs))
