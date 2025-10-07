@@ -23,7 +23,7 @@ interface ComboboxProps<T> {
   options: Array<{ value: T; label: string }>;
 }
 
-// @ts-expect-error
+// @ts-expect-error No .dts file exists for this package.
 const score = (await import("command-score")).default as (
   word: string,
   abbreviation: string,
