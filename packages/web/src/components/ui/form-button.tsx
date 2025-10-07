@@ -1,7 +1,6 @@
 import type { ComponentProps } from "react";
 import { Button } from "./button";
 import { Loader2Icon } from "lucide-react";
-import React from "react";
 
 interface FormButtonProps extends ComponentProps<typeof Button> {
   canSubmit: boolean;

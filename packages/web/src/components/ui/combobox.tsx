@@ -18,14 +18,18 @@ import {
 } from "@/components/ui/popover";
 import { useFieldContext } from "./form-context";
 
-interface ComboboxProps {
+interface ComboboxProps<T> {
   placeholder: string;
   search: { placeholder: string; empty: string };
-  options: Array<{ value: string; label: string }>;
+  options: Array<{ value: T; label: string }>;
 }
 
-export function Combobox({ placeholder, search, options }: ComboboxProps) {
-  const field = useFieldContext<string>();
+export function Combobox<T extends string | number>({
+  placeholder,
+  search,
+  options,
+}: ComboboxProps<T>) {
+  const field = useFieldContext<T>();
 
   const [open, setOpen] = React.useState(false);
 
@@ -54,11 +58,18 @@ export function Combobox({ placeholder, search, options }: ComboboxProps) {
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
-                  value={option.value}
+                  value={option.value.toString()}
                   onSelect={(currentValue) => {
-                    field.handleChange((value) =>
-                      currentValue === value ? "" : currentValue,
-                    );
+                    field.handleChange(() => {
+                      switch (typeof options[0].value) {
+                        case "number":
+                          return parseInt(currentValue) as T;
+                        case "string":
+                          return currentValue as T;
+                        default:
+                          throw new Error("Something went wrong.");
+                      }
+                    });
                     setOpen(false);
                   }}
                 >

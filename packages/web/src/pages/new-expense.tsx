@@ -6,6 +6,7 @@ import { profileQuery, profilesQuery } from "@/stores/profile";
 import { useAppForm } from "@/components/ui/form";
 import { useCreate } from "@/stores/expense";
 import { categoriesQuery } from "@/stores/category";
+import { useMemo } from "react";
 
 function NewExpense() {
   const create = useCreate();
@@ -13,12 +14,20 @@ function NewExpense() {
   const profiles = useSuspenseQuery(profilesQuery);
   const categories = useSuspenseQuery(categoriesQuery);
 
-  const form = useAppForm({
-    defaultValues: {
+  const defaultValues = useMemo(
+    () => ({
       label: "",
       amount: "",
       timestamp: new Date(),
       spenderId: profile.data?.sub ?? "",
+      categoryId: null,
+    }),
+    [profile.data?.sub],
+  );
+
+  const form = useAppForm({
+    defaultValues: defaultValues as Omit<typeof defaultValues, "categoryId"> & {
+      categoryId: number | null;
     },
     validators: {
       onChange: z.object({
@@ -30,10 +39,18 @@ function NewExpense() {
           .positive({ error: "Le montant doit être positif" }),
         timestamp: z.date({ error: "Saisir la date de la transaction" }),
         spenderId: z
-          .string({ error: "Saisir la personne ayant effectué la transaction" })
+          .string({
+            error: "Saisir la personne ayant effectué la transaction",
+          })
           .refine((sub) => profiles.data.find((p) => p.sub === sub), {
             error: "Cette personne n'est pas disponible",
           }),
+        categoryId: z
+          .number({ error: "Saisir la catégorie de la transaction" })
+          .refine((id) => categories.data.find((c) => c.id === id), {
+            error: "Cette catégorie n'est pas disponible",
+          })
+          .nullable(),
       }),
     },
     onSubmit: ({ value }) => create(value),
@@ -66,6 +83,26 @@ function NewExpense() {
               <>
                 <form.Label>Montant</form.Label>
                 <field.Input type="number" step="0.01" />
+                <form.FieldError />
+              </>
+            )}
+          </form.AppField>
+
+          <form.AppField name="categoryId">
+            {(field) => (
+              <>
+                <form.Label>Catégorie</form.Label>
+                <field.Combobox
+                  placeholder="Sélectionner une catégorie"
+                  search={{
+                    placeholder: "Trouver une catégorie",
+                    empty: "Aucune catégorie ne correspond",
+                  }}
+                  options={categories.data.map((category) => ({
+                    label: category.label,
+                    value: category.id,
+                  }))}
+                />
                 <form.FieldError />
               </>
             )}

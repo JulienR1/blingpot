@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     amount integer,
     datetime integer default (strftime('%s', 'now')),
     author_id text,
-    category_id integer default(1),
+    category_id integer not null on conflict replace default(1),
     foreign key(spender_id) references profiles(id),
     foreign key(author_id) references profiles(id),
     foreign key(category_id) references categories(id)

@@ -1,6 +1,7 @@
 package expense
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -41,7 +42,12 @@ func Create(db database.Querier, label string, amount int, timestamp time.Time, 
 	assert.AssertErr(err)
 	defer stmt.Close()
 
-	if err = stmt.QueryRow(spender.Sub, label, amount, timestamp.Unix(), author.Sub, category.Id).Scan(&id); err != nil {
+	categoryId := sql.NullInt32{Valid: false}
+	if category != nil {
+		categoryId = sql.NullInt32{Valid: true, Int32: int32(category.Id)}
+	}
+
+	if err = stmt.QueryRow(spender.Sub, label, amount, timestamp.Unix(), author.Sub, categoryId).Scan(&id); err != nil {
 		return 0, fmt.Errorf("expense.Create: %w, %w", ExpenseCreateErr, err)
 	}
 

@@ -20,7 +20,7 @@ type CreateExpenseBody struct {
 	Amount     int    `json:"amount" validate:"required,number,gt=0"`
 	SpenderId  string `json:"spenderId" validate:"required,min=1,alphanum"`
 	Timestamp  int64  `json:"timestamp" validate:"required,number"`
-	CategoryId *int   `json:"categoryId" validate:"optional_num,min=1"`
+	CategoryId *int   `json:"categoryId"`
 }
 
 type CreateResponseBody struct {

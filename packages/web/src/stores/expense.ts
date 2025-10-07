@@ -12,18 +12,28 @@ type CreatePayload = {
   amount: string;
   timestamp: Date;
   spenderId: string;
+  categoryId: number | null;
 };
 
 export const useCreate = () => {
   const q = useQueryClient();
   return useCallback(
-    async ({ label, amount, timestamp, spenderId }: CreatePayload) => {
+    async ({
+      label,
+      amount,
+      timestamp,
+      spenderId,
+      categoryId,
+    }: CreatePayload) => {
       const body = {
         label,
         spenderId,
         amount: Math.floor(100 * parseFloat(amount)),
         timestamp: Math.floor(timestamp.getTime() / 1000),
+        categoryId,
       };
+
+      // TODO: find why category id is always null :/
 
       const id = await request("/expenses").post(CreateResponse, { body });
       if (id != null) {
