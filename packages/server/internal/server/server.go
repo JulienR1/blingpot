@@ -27,6 +27,7 @@ func Run(config *ServerConfig) error {
 
 	http.Handle("GET /categories", middlewares.Authenticated(category.HandleFindAll))
 
+	http.Handle("GET /expenses", middlewares.Authenticated(expense.HandleFind))
 	http.Handle("POST /expenses", middlewares.Authenticated(expense.HandleCreate))
 
 	fs := http.FileServer(http.Dir(fmt.Sprintf("%s/assets", config.WebDir)))
