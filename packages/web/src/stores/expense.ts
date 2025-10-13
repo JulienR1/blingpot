@@ -4,14 +4,15 @@ import { useCallback } from "react";
 import type { Category } from "./category";
 import type { Profile } from "./profile";
 import z from "zod";
+import { Money } from "@/lib/schemas";
 
-const EXPENSES = "expenses";
+export const EXPENSES = "expenses";
 
 const ExpenseSchema = z.object({
   id: z.number(),
   spenderId: z.string(),
   label: z.string(),
-  amount: z.number().transform((num) => Math.round(num / 100)),
+  amount: Money,
   timestamp: z.number().transform((num) => new Date(num)),
   authorId: z.string(),
   categoryId: z.number(),
@@ -27,12 +28,10 @@ export type Expense = Omit<
   author: Profile;
 };
 
-type FetchParams = { queryKey: [string, { start: number; end: number }] };
-export async function fetchExpenses({ queryKey }: FetchParams) {
-  const [_, opts] = queryKey;
+export async function fetchExpenses(start: number, end: number) {
   const params = new URLSearchParams({
-    start: opts.start.toString(),
-    end: opts.end.toString(),
+    start: start.toString(),
+    end: end.toString(),
   });
   const expenses = await request(`/expenses?${params.toString()}`).get(
     z.array(ExpenseSchema)
@@ -42,8 +41,14 @@ export async function fetchExpenses({ queryKey }: FetchParams) {
 
 export const expensesQuery = (start: Date, end: Date) =>
   queryOptions({
-    queryKey: [EXPENSES, { start: start.getTime(), end: end.getTime() }],
-    queryFn: fetchExpenses,
+    queryKey: [
+      EXPENSES,
+      { start: start.getTime(), end: end.getTime() },
+    ] as const,
+    queryFn: ({ queryKey }) => {
+      const [_, { start, end }] = queryKey;
+      return fetchExpenses(start, end);
+    },
   });
 
 const CreateResponse = z.object({ id: z.number() });
@@ -70,7 +75,7 @@ export const useCreate = () => {
         label,
         spenderId,
         amount: Math.floor(100 * parseFloat(amount)),
-        timestamp: Math.floor(timestamp.getTime() / 1000),
+        timestamp: timestamp.getTime(),
         categoryId,
       };
 

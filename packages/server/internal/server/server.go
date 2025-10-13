@@ -11,6 +11,7 @@ import (
 	"github.com/julienr1/blingpot/internal/expense"
 	"github.com/julienr1/blingpot/internal/middlewares"
 	"github.com/julienr1/blingpot/internal/profile"
+	"github.com/julienr1/blingpot/internal/summary"
 )
 
 func Run(config *ServerConfig) error {
@@ -29,6 +30,8 @@ func Run(config *ServerConfig) error {
 
 	http.Handle("GET /expenses", middlewares.Authenticated(expense.HandleFind))
 	http.Handle("POST /expenses", middlewares.Authenticated(expense.HandleCreate))
+
+	http.Handle("GET /summary/expenses", middlewares.Authenticated(summary.HandleExpenses))
 
 	fs := http.FileServer(http.Dir(fmt.Sprintf("%s/assets", config.WebDir)))
 	http.Handle("/assets/", http.StripPrefix("/assets/", fs))

@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "./ui/table";
 import type { Category } from "@/stores/category";
+import { moneyFormatter, timestampFormatter } from "@/lib/formatters";
 
 export function ShowcaseTable() {
   return (
@@ -25,25 +26,23 @@ export function ShowcaseTable() {
   );
 }
 
-const timestampFormatter = new Intl.DateTimeFormat("en-CA");
-const moneyFormatter = new Intl.NumberFormat("fr-CA", {
-  style: "currency",
-  currency: "CAD",
-});
-
 const column = createColumnHelper<Expense>();
 const columns = [
   column.accessor("timestamp", {
+    header: "Date",
     cell: ({ getValue }) => timestampFormatter.format(getValue()),
   }),
-  column.accessor("label", {}),
+  column.accessor("label", { header: "Description" }),
   column.accessor("amount", {
+    header: "Montant",
     cell: ({ getValue }) => moneyFormatter.format(getValue()),
   }),
   column.accessor("category", {
+    header: "Catégorie",
     cell: ({ getValue }) => <CategoryCell category={getValue()} />,
   }),
-  column.accessor("author", {
+  column.accessor("spender", {
+    header: "Source",
     cell: ({ getValue }) => `${getValue().firstName} ${getValue().lastName}`,
   }),
 ];

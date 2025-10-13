@@ -1,12 +1,17 @@
 package query
 
 import (
+	"cmp"
+	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/julienr1/blingpot/internal/assert"
 	"github.com/julienr1/blingpot/internal/dtos"
 )
+
+var ErrExpectedLessThan = errors.New("expected value to be smaller")
 
 func Integer(r *http.Request, key string, out *int) (err error) {
 	str := r.URL.Query().Get(key)
@@ -24,4 +29,11 @@ func UnixTime(r *http.Request, key string, out *dtos.UnixTime) error {
 
 	*out = dtos.NewUnixTime(int64(milliseconds))
 	return nil
+}
+
+func Less[T cmp.Ordered](a, b T) error {
+	if a < b {
+		return nil
+	}
+	return fmt.Errorf("%w: %s > %s", ErrExpectedLessThan, a, b)
 }

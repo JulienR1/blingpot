@@ -13,9 +13,7 @@ func (ut *UnixTime) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	t := NewUnixTime(ms)
-	ut = &t
-
+	*ut = NewUnixTime(ms)
 	return nil
 }
 

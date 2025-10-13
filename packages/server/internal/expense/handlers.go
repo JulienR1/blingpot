@@ -24,11 +24,11 @@ type FindParams struct {
 }
 
 type CreateExpenseBody struct {
-	Label      string `json:"label" validate:"required,min=1"`
-	Amount     int    `json:"amount" validate:"required,number,gt=0"`
-	SpenderId  string `json:"spenderId" validate:"required,min=1,alphanum"`
-	Timestamp  int64  `json:"timestamp" validate:"required,number"`
-	CategoryId *int   `json:"categoryId"`
+	Label      string        `json:"label" validate:"required,min=1"`
+	Amount     int           `json:"amount" validate:"required,number,gt=0"`
+	SpenderId  string        `json:"spenderId" validate:"required,min=1,alphanum"`
+	Timestamp  dtos.UnixTime `json:"timestamp" validate:"required,number"`
+	CategoryId *int          `json:"categoryId"`
 }
 
 type CreateResponseBody struct {
@@ -41,11 +41,7 @@ func HandleFind(w http.ResponseWriter, r *http.Request) {
 
 	errors.Join(err, query.UnixTime(r, "start", &start))
 	errors.Join(err, query.UnixTime(r, "end", &end))
-
-	if err != nil {
-		http.Error(w, "invalid request parameters", http.StatusBadRequest)
-		return
-	}
+	errors.Join(err, query.Less(time.Time(start).Unix(), time.Time(end).Unix()))
 
 	db, err := database.Open()
 	assert.AssertErr(err)
@@ -98,8 +94,7 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	timestamp := time.Unix(body.Timestamp, 0)
-	id, err := Create(db, body.Label, body.Amount, timestamp, spender, &p, c)
+	id, err := Create(db, body.Label, body.Amount, time.Time(body.Timestamp), spender, &p, c)
 	if err != nil {
 		log.Printf("could not create expense: %s\r\n", err.Error())
 		http.Error(w, "could not create expense", http.StatusInternalServerError)

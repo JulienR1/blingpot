@@ -9,3 +9,8 @@ type Expense struct {
 	AuthorId   string   `json:"authorId"`
 	CategoryId int      `json:"categoryId"`
 }
+
+type ExpensesSummary struct {
+	Total     int         `json:"total"`
+	Subtotals map[int]int `json:"categories"`
+}
