@@ -1,6 +1,8 @@
 import { request } from "@/lib/request";
 import { queryOptions, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import type { Category } from "./category";
+import type { Profile } from "./profile";
 import z from "zod";
 
 const EXPENSES = "expenses";
@@ -15,7 +17,15 @@ const ExpenseSchema = z.object({
   categoryId: z.number(),
 });
 
-export type Expense = z.infer<typeof ExpenseSchema>;
+export type ExpenseCore = z.infer<typeof ExpenseSchema>;
+export type Expense = Omit<
+  ExpenseCore,
+  "spenderId" | "categoryId" | "authorId"
+> & {
+  category: Category;
+  spender: Profile;
+  author: Profile;
+};
 
 type FetchParams = { queryKey: [string, { start: number; end: number }] };
 export async function fetchExpenses({ queryKey }: FetchParams) {

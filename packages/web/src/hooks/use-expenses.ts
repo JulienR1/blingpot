@@ -1,28 +1,34 @@
 import { dict } from "@/lib/utils";
-import type { Category } from "@/stores/category";
-import type { Expense } from "@/stores/expense";
-import type { Profile } from "@/stores/profile";
+import { categoriesQuery } from "@/stores/category";
+import { expensesQuery } from "@/stores/expense";
+import { profilesQuery } from "@/stores/profile";
+import { useSuspenseQueries } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-type Stores = {
-  expenses: Array<Expense>;
-  profiles: Array<Profile>;
-  categories: Array<Category>;
+type ExpensesParams = {
+  start: Date;
+  end: Date;
 };
 
-export function useExpenses(stores: Stores) {
+export function useExpenses({ start, end }: ExpensesParams) {
+  const [expensesResult, profilesResult, categoriesResult] = useSuspenseQueries(
+    {
+      queries: [expensesQuery(start, end), profilesQuery, categoriesQuery],
+    }
+  );
+
   const profiles = useMemo(
-    () => dict(stores.profiles, "sub"),
-    [stores.profiles]
+    () => dict(profilesResult.data, "sub"),
+    [profilesResult.data]
   );
   const categories = useMemo(
-    () => dict(stores.categories, "id"),
-    [stores.categories]
+    () => dict(categoriesResult.data, "id"),
+    [categoriesResult.data]
   );
 
   return useMemo(
     () =>
-      stores.expenses.map((expense) => ({
+      expensesResult.data.map((expense) => ({
         id: expense.id,
         label: expense.label,
         amount: expense.amount,
@@ -31,6 +37,6 @@ export function useExpenses(stores: Stores) {
         spender: profiles[expense.spenderId],
         author: profiles[expense.authorId],
       })),
-    [stores.expenses, profiles, categories]
+    [expensesResult.data, profiles, categories]
   );
 }
