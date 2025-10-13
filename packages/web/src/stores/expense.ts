@@ -46,7 +46,7 @@ export const expensesQuery = (start: Date, end: Date) =>
       { start: start.getTime(), end: end.getTime() },
     ] as const,
     queryFn: ({ queryKey }) => {
-      const [_, { start, end }] = queryKey;
+      const { start, end } = queryKey[1];
       return fetchExpenses(start, end);
     },
   });

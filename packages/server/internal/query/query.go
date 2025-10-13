@@ -3,7 +3,6 @@ package query
 import (
 	"cmp"
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -35,5 +34,5 @@ func Less[T cmp.Ordered](a, b T) error {
 	if a < b {
 		return nil
 	}
-	return fmt.Errorf("%w: %s > %s", ErrExpectedLessThan, a, b)
+	return ErrExpectedLessThan
 }
