@@ -2,12 +2,12 @@ import { createRoute, Link } from "@tanstack/react-router";
 import { root } from "./root";
 import { useSuspenseQueries } from "@tanstack/react-query";
 import { expensesQuery } from "@/stores/expense";
-import { profilesQuery, type Profile } from "@/stores/profile";
-import { categoriesQuery, type Category } from "@/stores/category";
-import { useMemo } from "react";
+import { profilesQuery } from "@/stores/profile";
+import { categoriesQuery } from "@/stores/category";
+import { useExpenses } from "@/hooks/use-expenses";
 
 function Home() {
-  const [expenses, profiles, categories] = useSuspenseQueries({
+  const queries = useSuspenseQueries({
     queries: [
       expensesQuery(new Date(2000, 0, 1), new Date(2100, 0, 1)),
       profilesQuery,
@@ -15,50 +15,18 @@ function Home() {
     ],
   });
 
-  const profilesMap = useMemo(
-    () =>
-      profiles.data.reduce(
-        (all, p) => ({
-          ...all,
-          [p.sub]: p,
-        }),
-        {} as Record<string, Profile>
-      ),
-    [profiles.data]
-  );
-
-  const categoriesMap = useMemo(
-    () =>
-      categories.data.reduce(
-        (all, c) => ({
-          ...all,
-          [c.id]: c,
-        }),
-        {} as Record<string, Category>
-      ),
-    [categories.data]
-  );
-
-  const exp = useMemo(
-    () =>
-      expenses.data.map((e) => ({
-        id: e.id,
-        label: e.label,
-        amount: e.amount,
-        timestamp: e.timestamp,
-        category: categoriesMap[e.categoryId],
-        spender: profilesMap[e.spenderId],
-        author: profilesMap[e.authorId],
-      })),
-    [profilesMap, categoriesMap, expenses.data]
-  );
+  const expenses = useExpenses({
+    expenses: queries[0].data,
+    profiles: queries[1].data,
+    categories: queries[2].data,
+  });
 
   return (
     <>
       <p>log in or do something idk</p>
       <Link to="/new">go to new</Link>
 
-      <pre>{JSON.stringify(exp, null, 2)}</pre>
+      <pre>{JSON.stringify(expenses, null, 2)}</pre>
     </>
   );
 }

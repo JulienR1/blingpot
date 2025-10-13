@@ -9,8 +9,8 @@ const ExpenseSchema = z.object({
   id: z.number(),
   spenderId: z.string(),
   label: z.string(),
-  amount: z.number().transform(num => Math.round(num / 100)),
-  timestamp: z.number().transform(num => new Date(num)),
+  amount: z.number().transform((num) => Math.round(num / 100)),
+  timestamp: z.number().transform((num) => new Date(num)),
   authorId: z.string(),
   categoryId: z.number(),
 });
@@ -25,9 +25,8 @@ export async function fetchExpenses({ queryKey }: FetchParams) {
     end: opts.end.toString(),
   });
   const expenses = await request(`/expenses?${params.toString()}`).get(
-    z.array(ExpenseSchema),
+    z.array(ExpenseSchema)
   );
-  console.log(expenses)
   return expenses ?? [];
 }
 
@@ -70,6 +69,6 @@ export const useCreate = () => {
         q.invalidateQueries({ queryKey: [EXPENSES, id] });
       }
     },
-    [q],
+    [q]
   );
 };
