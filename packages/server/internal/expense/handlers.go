@@ -43,6 +43,11 @@ func HandleFind(w http.ResponseWriter, r *http.Request) {
 	errors.Join(err, query.UnixTime(r, "end", &end))
 	errors.Join(err, query.Less(time.Time(start).Unix(), time.Time(end).Unix()))
 
+	if err != nil {
+		http.Error(w, "Invalid request parameters", http.StatusBadRequest)
+		return
+	}
+
 	db, err := database.Open()
 	assert.AssertErr(err)
 	defer db.Close()

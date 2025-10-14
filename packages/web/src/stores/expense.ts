@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import type { Category } from "./category";
 import type { Profile } from "./profile";
 import z from "zod";
-import { Money } from "@/lib/schemas";
+import { Money, Timestamp } from "@/lib/schemas";
 
 export const EXPENSES = "expenses";
 
@@ -13,7 +13,7 @@ const ExpenseSchema = z.object({
   spenderId: z.string(),
   label: z.string(),
   amount: Money,
-  timestamp: z.number().transform((num) => new Date(num)),
+  timestamp: Timestamp,
   authorId: z.string(),
   categoryId: z.number(),
 });

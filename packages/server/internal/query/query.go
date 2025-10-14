@@ -13,6 +13,7 @@ import (
 var ErrExpectedLessThan = errors.New("expected value to be smaller")
 
 func Integer(r *http.Request, key string, out *int) (err error) {
+	assert.Assert(out != nil, "query.Integer: Invalid out pointer")
 	str := r.URL.Query().Get(key)
 	*out, err = strconv.Atoi(str)
 	return err
