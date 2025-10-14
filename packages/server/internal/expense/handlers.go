@@ -2,6 +2,7 @@ package expense
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,20 +12,59 @@ import (
 	"github.com/julienr1/blingpot/internal/assert"
 	"github.com/julienr1/blingpot/internal/category"
 	"github.com/julienr1/blingpot/internal/database"
+	"github.com/julienr1/blingpot/internal/dtos"
 	"github.com/julienr1/blingpot/internal/profile"
+	"github.com/julienr1/blingpot/internal/query"
 	"github.com/julienr1/blingpot/internal/response"
 )
 
+type FindParams struct {
+	Start dtos.UnixTime
+	End   dtos.UnixTime
+}
+
 type CreateExpenseBody struct {
-	Label      string `json:"label" validate:"required,min=1"`
-	Amount     int    `json:"amount" validate:"required,number,gt=0"`
-	SpenderId  string `json:"spenderId" validate:"required,min=1,alphanum"`
-	Timestamp  int64  `json:"timestamp" validate:"required,number"`
-	CategoryId *int   `json:"categoryId"`
+	Label      string        `json:"label" validate:"required,min=1"`
+	Amount     int           `json:"amount" validate:"required,number,gt=0"`
+	SpenderId  string        `json:"spenderId" validate:"required,min=1,alphanum"`
+	Timestamp  dtos.UnixTime `json:"timestamp" validate:"required,number"`
+	CategoryId *int          `json:"categoryId"`
 }
 
 type CreateResponseBody struct {
 	Id int `json:"id"`
+}
+
+func HandleFind(w http.ResponseWriter, r *http.Request) {
+	var start, end dtos.UnixTime
+	var err error
+
+	errors.Join(err, query.UnixTime(r, "start", &start))
+	errors.Join(err, query.UnixTime(r, "end", &end))
+	errors.Join(err, query.Less(time.Time(start).Unix(), time.Time(end).Unix()))
+
+	if err != nil {
+		http.Error(w, "Invalid request parameters", http.StatusBadRequest)
+		return
+	}
+
+	db, err := database.Open()
+	assert.AssertErr(err)
+	defer db.Close()
+
+	expenses, err := Find(db, time.Time(start), time.Time(end))
+	if err != nil {
+		log.Printf("could not find expense: %s\r\n", err.Error())
+		http.Error(w, "could not find expense", http.StatusInternalServerError)
+		return
+	}
+
+	var dtos = make([]dtos.Expense, len(expenses))
+	for i, expense := range expenses {
+		dtos[i] = expense.Dto()
+	}
+
+	response.Json(w, dtos)
 }
 
 func HandleCreate(w http.ResponseWriter, r *http.Request) {
@@ -59,8 +99,7 @@ func HandleCreate(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	timestamp := time.Unix(body.Timestamp, 0)
-	id, err := Create(db, body.Label, body.Amount, timestamp, spender, &p, c)
+	id, err := Create(db, body.Label, body.Amount, time.Time(body.Timestamp), spender, &p, c)
 	if err != nil {
 		log.Printf("could not create expense: %s\r\n", err.Error())
 		http.Error(w, "could not create expense", http.StatusInternalServerError)
