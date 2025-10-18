@@ -15,6 +15,7 @@ type Category struct {
 	Foreground string
 	Background string
 	IconName   string
+	OrderIndex int
 }
 
 var ErrCategoryNotFound = errors.New("Could not find category")
@@ -23,7 +24,7 @@ func FindById(db database.Querier, id int) (*Category, error) {
 	var c Category
 
 	query := `
-		select id, label, color_fg, color_bg, icon_name
+		select id, label, color_fg, color_bg, icon_name, order_index
 		from categories
 		where id = ?;
 	`
@@ -33,7 +34,7 @@ func FindById(db database.Querier, id int) (*Category, error) {
 	defer stmt.Close()
 
 	row := stmt.QueryRow(id)
-	err = row.Scan(&c.Id, &c.Label, &c.Foreground, &c.Background, &c.IconName)
+	err = row.Scan(&c.Id, &c.Label, &c.Foreground, &c.Background, &c.IconName, &c.OrderIndex)
 	if err != nil {
 		return nil, fmt.Errorf("category.FindById: %w %w", ErrCategoryNotFound, err)
 	}
@@ -42,7 +43,11 @@ func FindById(db database.Querier, id int) (*Category, error) {
 }
 
 func FindAll(db database.Querier) ([]Category, error) {
-	stmt, err := db.Prepare("select id, label, color_fg, color_bg, icon_name from categories;")
+	stmt, err := db.Prepare(`
+		select id, label, color_fg, color_bg, icon_name, order_index
+		from categories
+		order by order_index;
+	`)
 	assert.AssertErr(err)
 	defer stmt.Close()
 
@@ -54,7 +59,7 @@ func FindAll(db database.Querier) ([]Category, error) {
 	var categories []Category
 	for rows.Next() {
 		var c Category
-		if err = rows.Scan(&c.Id, &c.Label, &c.Foreground, &c.Background, &c.IconName); err != nil {
+		if err = rows.Scan(&c.Id, &c.Label, &c.Foreground, &c.Background, &c.IconName, &c.OrderIndex); err != nil {
 			return []Category{}, fmt.Errorf("category.FindAll: %w", err)
 		}
 		categories = append(categories, c)
@@ -72,5 +77,6 @@ func (c Category) Dto() dtos.Category {
 			Foregound:  c.Foreground,
 			Background: c.Background,
 		},
+		OrderIndex: c.OrderIndex,
 	}
 }

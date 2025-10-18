@@ -45,12 +45,12 @@ function SummaryTableContents() {
 
   const data = useMemo(() => {
     const categoriesMap = dict(categories.data, "id");
-    return Object.entries(summary.data?.categories ?? {}).map(
-      ([categoryId, subtotal]) => ({
+    return Object.entries(summary.data?.categories ?? {})
+      .map(([categoryId, subtotal]) => ({
         category: categoriesMap[parseInt(categoryId)],
         subtotal,
-      })
-    );
+      }))
+      .sort((a, b) => a.category.order - b.category.order);
   }, [summary.data, categories.data]);
 
   const table = useReactTable({
@@ -68,7 +68,7 @@ function SummaryTableContents() {
               <TableHead key={header.id} colSpan={header.colSpan}>
                 {flexRender(
                   header.column.columnDef.header,
-                  header.getContext()
+                  header.getContext(),
                 )}
               </TableHead>
             ))}

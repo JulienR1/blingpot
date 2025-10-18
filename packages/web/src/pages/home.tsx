@@ -6,14 +6,14 @@ import { profilesQuery } from "@/stores/profile";
 import { categoriesQuery } from "@/stores/category";
 import { ShowcaseTable } from "@/components/showcase-table";
 import { expensesSummaryQuery } from "@/stores/summary";
-import { SummaryTable } from "@/components/sumary-table";
+import { SummaryTable } from "@/components/summary-table";
 
 function Home() {
   usePrefetchQuery(profilesQuery);
   usePrefetchQuery(categoriesQuery);
   usePrefetchQuery(expensesQuery(new Date(2000, 0, 1), new Date(2100, 0, 1)));
   usePrefetchQuery(
-    expensesSummaryQuery(new Date(2000, 0, 1), new Date(2100, 0, 1))
+    expensesSummaryQuery(new Date(2000, 0, 1), new Date(2100, 0, 1)),
   );
 
   return (

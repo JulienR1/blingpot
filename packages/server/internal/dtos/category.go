@@ -6,8 +6,9 @@ type Color struct {
 }
 
 type Category struct {
-	Id       int    `json:"id"`
-	Label    string `json:"label"`
-	Color    Color  `json:"color"`
-	IconName string `json:"iconName"`
+	Id         int    `json:"id"`
+	Label      string `json:"label"`
+	Color      Color  `json:"color"`
+	IconName   string `json:"iconName"`
+	OrderIndex int    `json:"order"`
 }

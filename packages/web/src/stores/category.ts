@@ -12,6 +12,7 @@ const CategorySchema = z.object({
     background: z.string(),
   }),
   iconName: z.string(),
+  order: z.number(),
 });
 
 export type Category = z.infer<typeof CategorySchema>;

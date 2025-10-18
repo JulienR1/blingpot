@@ -12,18 +12,16 @@ type ExpensesParams = {
 
 export function useExpenses({ start, end }: ExpensesParams) {
   const [expensesResult, profilesResult, categoriesResult] = useSuspenseQueries(
-    {
-      queries: [expensesQuery(start, end), profilesQuery, categoriesQuery],
-    }
+    { queries: [expensesQuery(start, end), profilesQuery, categoriesQuery] },
   );
 
   const profiles = useMemo(
     () => dict(profilesResult.data, "sub"),
-    [profilesResult.data]
+    [profilesResult.data],
   );
   const categories = useMemo(
     () => dict(categoriesResult.data, "id"),
-    [categoriesResult.data]
+    [categoriesResult.data],
   );
 
   return useMemo(
@@ -37,6 +35,6 @@ export function useExpenses({ start, end }: ExpensesParams) {
         spender: profiles[expense.spenderId],
         author: profiles[expense.authorId],
       })),
-    [expensesResult.data, profiles, categories]
+    [expensesResult.data, profiles, categories],
   );
 }
