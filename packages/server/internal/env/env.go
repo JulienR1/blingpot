@@ -14,6 +14,7 @@ var DbConnStr string
 
 var Mode string
 var Domain string
+var AppServerUrl string
 
 var WebDir string
 
@@ -28,8 +29,9 @@ func Load() {
 	JwtSecret = []byte(env("JWT_SECRET", ""))
 	DbConnStr = env("DB_CONN_STR", "")
 
-	Mode = env("MODE", "dev")
+	Mode = env("MODE", "prod")
 	Domain = env("DOMAIN", "localhost:8888")
+	AppServerUrl = env("APP_SERVER_URL", "http://localhost:5173")
 
 	WebDir = env("WEB_DIR", "../web/dist")
 }
