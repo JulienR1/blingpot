@@ -13,13 +13,14 @@ function Home() {
   usePrefetchQuery(categoriesQuery);
   usePrefetchQuery(expensesQuery(new Date(2000, 0, 1), new Date(2100, 0, 1)));
   usePrefetchQuery(
-    expensesSummaryQuery(new Date(2000, 0, 1), new Date(2100, 0, 1)),
+    expensesSummaryQuery(new Date(2000, 0, 1), new Date(2100, 0, 1))
   );
 
   return (
     <>
-      <p>log in or do something idk</p>
-      <Link to="/new">go to new</Link>
+      <Link to="/new" className="p-2 underline">
+        Add a new expense
+      </Link>
 
       <SummaryTable />
       <div className="h-4"></div>

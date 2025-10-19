@@ -18,6 +18,7 @@ import {
 } from "@tanstack/react-table";
 import { dict } from "@/lib/utils";
 import { moneyFormatter } from "@/lib/formatters";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function SummaryTable() {
   return (
@@ -29,11 +30,33 @@ export function SummaryTable() {
 
 const column = createColumnHelper<{ category: Category; subtotal: number }>();
 const columns = [
-  column.accessor("category", { cell: ({ getValue }) => getValue().label }),
+  column.accessor("category", {
+    header: "Catégorie",
+    cell: ({ getValue }) => <CategoryCell {...getValue()} />,
+  }),
   column.accessor("subtotal", {
-    cell: ({ getValue }) => moneyFormatter.format(getValue()),
+    header: "Sous-total",
+    cell: ({ getValue }) => (
+      <div className="text-center">{moneyFormatter.format(getValue())}</div>
+    ),
   }),
 ];
+
+function CategoryCell({ label, iconName }: Category) {
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <div className="flex items-center gap-2 max-w-52 w-fit">
+          <span className="material-symbols-outlined">
+            <span className="block h-full text-base">{iconName}</span>
+          </span>
+          <span className="text-ellipsis overflow-hidden text-sm">{label}</span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 function SummaryTableContents() {
   const [summary, categories] = useSuspenseQueries({
@@ -60,15 +83,19 @@ function SummaryTableContents() {
   });
 
   return (
-    <Table>
+    <Table className="max-w-80 mx-auto">
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>
             {headerGroup.headers.map((header) => (
-              <TableHead key={header.id} colSpan={header.colSpan}>
+              <TableHead
+                key={header.id}
+                colSpan={header.colSpan}
+                className="font-bold text-lg last:text-center"
+              >
                 {flexRender(
                   header.column.columnDef.header,
-                  header.getContext(),
+                  header.getContext()
                 )}
               </TableHead>
             ))}
@@ -87,7 +114,7 @@ function SummaryTableContents() {
         {table.getRowModel().rows.map((row) => (
           <TableRow key={row.id}>
             {row.getVisibleCells().map((cell) => (
-              <TableCell key={cell.id}>
+              <TableCell key={cell.id} className="py-1">
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
               </TableCell>
             ))}
