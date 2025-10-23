@@ -32,26 +32,37 @@ const columns = [
     header: "Date",
     cell: ({ getValue }) => timestampFormatter.format(getValue()),
   }),
-  column.accessor("label", { header: "Description" }),
+  column.accessor("label", {
+    header: "Description",
+    cell: ({ getValue }) => (
+      <div className="min-w-36 max-w-44 text-ellipsis overflow-hidden">
+        {getValue()}
+      </div>
+    ),
+  }),
   column.accessor("amount", {
     header: "Montant",
-    cell: ({ getValue }) => moneyFormatter.format(getValue()),
+    cell: ({ getValue }) => (
+      <div className="max-w-14 text-ellipsis overflow-hidden mx-auto">
+        {moneyFormatter.format(getValue())}
+      </div>
+    ),
   }),
   column.accessor("category", {
-    header: "Catégorie",
+    header: "",
     cell: ({ getValue }) => <CategoryCell category={getValue()} />,
   }),
   column.accessor("spender", {
-    header: "Source",
-    cell: ({ getValue }) => `${getValue().firstName} ${getValue().lastName}`,
+    header: "",
+    cell: ({ getValue }) =>
+      `${getValue().firstName[0]}${getValue().lastName[0]}`,
   }),
 ];
 
 function CategoryCell({ category }: { category: Category }) {
   return (
-    <div>
+    <div className="flex items-center justify-center">
       <span className="material-symbols-outlined">{category.iconName}</span>
-      <span>{category.label}</span>
     </div>
   );
 }
@@ -69,32 +80,41 @@ function ShowcaseTableContents() {
   });
 
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <TableHead key={header.id} colSpan={header.colSpan}>
-                {flexRender(
-                  header.column.columnDef.header,
-                  header.getContext()
-                )}
-              </TableHead>
-            ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id}>
-            {row.getVisibleCells().map((cell) => (
-              <TableCell key={cell.id}>
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </TableCell>
-            ))}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className="sm:max-w-[448px] mx-auto">
+      <Table className="mx-4 w-[calc(100%-2rem)]">
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead
+                  key={header.id}
+                  colSpan={header.colSpan}
+                  className="text-center"
+                >
+                  {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext()
+                  )}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.map((row) => (
+            <TableRow key={row.id}>
+              {row.getVisibleCells().map((cell) => (
+                <TableCell
+                  key={cell.id}
+                  className="text-sm p-1 py-2 w-fit text-center"
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

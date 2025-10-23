@@ -4,15 +4,29 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 
 	"github.com/julienr1/blingpot/internal/assert"
 	"github.com/julienr1/blingpot/internal/auth"
 	"github.com/julienr1/blingpot/internal/category"
+	"github.com/julienr1/blingpot/internal/env"
 	"github.com/julienr1/blingpot/internal/expense"
 	"github.com/julienr1/blingpot/internal/middlewares"
 	"github.com/julienr1/blingpot/internal/profile"
 	"github.com/julienr1/blingpot/internal/summary"
 )
+
+func rootHandler(webdir string) func(http.ResponseWriter, *http.Request) {
+	if env.Mode == "dev" {
+		url, _ := url.Parse(env.AppServerUrl)
+		proxy := httputil.NewSingleHostReverseProxy(url)
+		return func(w http.ResponseWriter, r *http.Request) { proxy.ServeHTTP(w, r) }
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, fmt.Sprintf("%s/index.html", webdir))
+	}
+}
 
 func Run(config *ServerConfig) error {
 	assert.Assert(config != nil, "server config is nil")
@@ -37,9 +51,7 @@ func Run(config *ServerConfig) error {
 	http.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	http.Handle("/*", http.RedirectHandler("/", http.StatusFound))
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, fmt.Sprintf("%s/index.html", config.WebDir))
-	})
+	http.HandleFunc("/", rootHandler(config.WebDir))
 
 	log.Println("Listening on", config.ServerUrl())
 	return http.ListenAndServe(config.Endpoint(), nil)

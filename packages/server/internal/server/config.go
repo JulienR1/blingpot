@@ -6,7 +6,7 @@ type Protocol string
 
 const (
 	HTTP  Protocol = "http"
-	HTTPS          = "https"
+	HTTPS Protocol = "https"
 )
 
 type ServerConfig struct {

@@ -6,7 +6,7 @@ import { profilesQuery } from "@/stores/profile";
 import { categoriesQuery } from "@/stores/category";
 import { ShowcaseTable } from "@/components/showcase-table";
 import { expensesSummaryQuery } from "@/stores/summary";
-import { SummaryTable } from "@/components/sumary-table";
+import { SummaryTable } from "@/components/summary-table";
 
 function Home() {
   usePrefetchQuery(profilesQuery);
@@ -18,11 +18,12 @@ function Home() {
 
   return (
     <>
-      <p>log in or do something idk</p>
-      <Link to="/new">go to new</Link>
+      <Link to="/new" className="p-2 underline">
+        Add a new expense
+      </Link>
 
       <SummaryTable />
-      <div className="h-4"></div>
+      <div className="h-6"></div>
       <ShowcaseTable />
     </>
   );
