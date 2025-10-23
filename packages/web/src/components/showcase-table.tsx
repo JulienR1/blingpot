@@ -49,7 +49,7 @@ const columns = [
     ),
   }),
   column.accessor("category", {
-    header: "Type",
+    header: "",
     cell: ({ getValue }) => <CategoryCell category={getValue()} />,
   }),
   column.accessor("spender", {
@@ -80,39 +80,41 @@ function ShowcaseTableContents() {
   });
 
   return (
-    <Table className="mx-4 w-[calc(100%-2rem)]">
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <TableHead
-                key={header.id}
-                colSpan={header.colSpan}
-                className="text-center"
-              >
-                {flexRender(
-                  header.column.columnDef.header,
-                  header.getContext()
-                )}
-              </TableHead>
-            ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id}>
-            {row.getVisibleCells().map((cell) => (
-              <TableCell
-                key={cell.id}
-                className="text-sm p-1 py-2 w-fit text-center"
-              >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </TableCell>
-            ))}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+    <div className="sm:max-w-[448px] mx-auto">
+      <Table className="mx-4 w-[calc(100%-2rem)]">
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead
+                  key={header.id}
+                  colSpan={header.colSpan}
+                  className="text-center"
+                >
+                  {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext()
+                  )}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.map((row) => (
+            <TableRow key={row.id}>
+              {row.getVisibleCells().map((cell) => (
+                <TableCell
+                  key={cell.id}
+                  className="text-sm p-1 py-2 w-fit text-center"
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

@@ -23,7 +23,7 @@ function Home() {
       </Link>
 
       <SummaryTable />
-      <div className="h-4"></div>
+      <div className="h-6"></div>
       <ShowcaseTable />
     </>
   );
